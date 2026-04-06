@@ -92,6 +92,10 @@ Add your own slide type by dropping a new composition into `remotion/src/composi
 - **`examples/my-first/`** — 3-slide starter template. Copy this folder, edit `script.json`, render. The fastest way to get a working video.
 - **`examples/schoger-demo/`** — the script behind [my first AI-generated short on X](https://x.com/runes_leo). A worked example of a real shipped video, kept for reference (assets not included, only the script).
 
+## Verified
+
+This release was end-to-end tested on macOS (Apple Silicon) with `examples/my-first`. The shipped pipeline produces a **1080×1920 @ 30fps, 8 seconds, 442 KB** vertical mp4 — narration via Fish Audio (or `say` fallback if no API key), captions via Whisper, render via Remotion. See `docs/quickstart.md` for first-run notes (including China network setup).
+
 ## Known limitations (v0.1)
 
 - No automatic cover generator — covers are whatever the `cover` slide renders

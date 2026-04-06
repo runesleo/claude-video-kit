@@ -11,5 +11,5 @@ __pycache__/
 .env.local
 .DS_Store
 examples/*/metadata.json
-examples/*/captions.json
+examples/*/workspace/
 !examples/schoger-demo/script.json
