@@ -1,5 +1,11 @@
 import React from "react";
-import { Composition, AbsoluteFill, Sequence, Audio, staticFile } from "remotion";
+import {
+  Composition,
+  AbsoluteFill,
+  Sequence,
+  Audio,
+  staticFile,
+} from "remotion";
 import { CoverSlide } from "./compositions/CoverSlide";
 import { TextSlide } from "./compositions/TextSlide";
 import { CodeSlide } from "./compositions/CodeSlide";
@@ -72,13 +78,18 @@ const DEFAULT_METADATA: Metadata = {
       type: "code",
       durationInFrames: 90,
       language: "ts",
-      code: 'const video = await kit.render(script);',
+      code: "const video = await kit.render(script);",
     },
   ],
 };
 
-const Main: React.FC<{ metadata?: Metadata }> = ({ metadata }) => {
-  const meta = metadata ?? DEFAULT_METADATA;
+/**
+ * Main receives the Metadata directly as its props (not wrapped in a
+ * `metadata` key), which matches what scripts/build-metadata.mjs writes
+ * to <project>/metadata.json. The CLI flag --props=<json> sets the entire
+ * props object of this component.
+ */
+const Main: React.FC<Metadata> = (meta) => {
   let offset = 0;
   return (
     <AbsoluteFill style={{ backgroundColor: "#0b0b0f" }}>
@@ -116,17 +127,28 @@ const calcDuration = (m: Metadata) =>
   m.slides.reduce((acc, s) => acc + s.durationInFrames, 0);
 
 export const Root: React.FC = () => {
-  const meta = DEFAULT_METADATA;
   return (
     <Composition
       id="Main"
       component={Main}
-      durationInFrames={calcDuration(meta)}
-      fps={meta.fps}
-      width={meta.width}
-      height={meta.height}
-      defaultProps={{ metadata: meta }}
-      // When rendering via CLI, pass --props=metadata.json to override.
+      // Placeholders; calculateMetadata reads the real values from props
+      // (the entire props object IS the Metadata, set via --props=<json>
+      // from scripts/render.sh).
+      durationInFrames={1}
+      fps={30}
+      width={1080}
+      height={1920}
+      defaultProps={DEFAULT_METADATA}
+      calculateMetadata={({ props }) => {
+        const meta: Metadata = props.slides ? props : DEFAULT_METADATA;
+        return {
+          durationInFrames: calcDuration(meta),
+          fps: meta.fps,
+          width: meta.width,
+          height: meta.height,
+          props: meta,
+        };
+      }}
     />
   );
 };
