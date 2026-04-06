@@ -30,8 +30,11 @@ node "$KIT_ROOT/scripts/build-metadata.mjs" "$PROJECT"
 echo "▶ [4/4] Remotion render"
 mkdir -p "$PROJECT/out"
 cd "$KIT_ROOT/remotion"
-npx remotion render src/index.ts Main "$PROJECT/out/full.mp4" \
-  --props="$PROJECT/metadata.json" \
+# Note: Remotion v4 --props expects either inline JSON or doesn't auto-load
+# file paths reliably. We pass file content via $(cat) so the JSON is inlined.
+PROPS_JSON="$(cat "$PROJECT/metadata.json")"
+./node_modules/.bin/remotion render src/index.ts Main "$PROJECT/out/full.mp4" \
+  --props="$PROPS_JSON" \
   --public-dir="$PROJECT/workspace"
 
 echo "✅ done → $PROJECT/out/full.mp4"
