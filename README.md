@@ -98,11 +98,12 @@ This release was end-to-end tested on macOS (Apple Silicon) with `examples/my-fi
 
 ## Known limitations (v0.1)
 
+- **The `say` fallback is rough — use Fish Audio for anything you'll publish.** Without an API key the pipeline degrades to macOS `say`, which is fine for "does my pipeline run end-to-end" but ships with two real annoyances: (a) it can't disambiguate Chinese homographs, e.g. `行` in `一行代码` gets read as `háng` instead of `xíng`; (b) Whisper's `base` model struggles to align robotic synthetic voices, so captions drift by a beat. Both vanish with a real Fish Audio voice.
 - No automatic cover generator — covers are whatever the `cover` slide renders
 - No B-roll / video clip support — slides are still-frame + audio + captions
-- Single voice per video (though per-slide voice override is in the schema)
-- IndexTTS2 backend is a placeholder — script is documented, wiring is left to the user due to CUDA environment variance
-- Chinese is the primary tested language; other languages work but captioning quality depends on Whisper model size
+- Single voice per video (per-slide voice override is in the schema but undertested)
+- IndexTTS2 backend is a placeholder — script is documented, CUDA wiring is left to the user
+- Chinese is the primary tested language; other languages work but captioning quality scales with Whisper model size (`base` → `medium` → `large-v3`)
 
 ## Roadmap
 
