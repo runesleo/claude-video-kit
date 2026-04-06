@@ -13,20 +13,29 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { execSync } from "node:child_process";
 
+/**
+ * Reads WAV duration via ffprobe.
+ *
+ * We previously hand-parsed bytes 28/40 of the WAV header but that broke on
+ * any file with extra chunks before `data` (e.g. LIST/INFO metadata inserted
+ * by macOS `say` + ffmpeg), causing duration to be read from a metadata
+ * chunk and producing nonsense like 0.5s instead of 5s.
+ *
+ * ffprobe is already a hard requirement (it ships with ffmpeg, listed in
+ * Requirements), so there's no extra install cost.
+ */
 function wavDurationSeconds(wavPath) {
-  const fd = fs.openSync(wavPath, "r");
-  try {
-    const header = Buffer.alloc(44);
-    fs.readSync(fd, header, 0, 44, 0);
-    // bytes 24-27: sample rate; 28-31: byte rate; 40-43: data chunk size
-    const byteRate = header.readUInt32LE(28);
-    const dataSize = header.readUInt32LE(40);
-    if (!byteRate) throw new Error("invalid wav header");
-    return dataSize / byteRate;
-  } finally {
-    fs.closeSync(fd);
+  const out = execSync(
+    `ffprobe -v error -show_entries format=duration -of csv=p=0 "${wavPath}"`,
+    { encoding: "utf8" }
+  );
+  const seconds = parseFloat(out.trim());
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    throw new Error(`ffprobe returned invalid duration for ${wavPath}: ${out}`);
   }
+  return seconds;
 }
 
 function main() {

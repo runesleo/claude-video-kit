@@ -96,6 +96,10 @@ cp .env.example .env   # 填 FISH_AUDIO_API_KEY, FISH_AUDIO_VOICE_ID
 - **`examples/my-first/`** — 3 个 slide 的极简起手模板。复制这个文件夹，改 `script.json`，渲染，搞定。最快出第一条视频的路径。
 - **`examples/schoger-demo/`** — [我在 X 上发的第一条 AI 视频](https://x.com/runes_leo)的脚本。当作"真实成品长什么样"的参考留着（不含素材，只有脚本）。
 
+## 验证过的
+
+v0.1 在 mac (Apple Silicon) 上端到端跑通了 `examples/my-first`，产出 **1080×1920 @ 30fps，8 秒，442 KB** 的竖屏 mp4 — 旁白用 Fish Audio（没 API key 会降级到 macOS `say`），字幕用 Whisper，渲染用 Remotion。中国大陆首次安装需要挂代理，详见 `docs/quickstart.md`。
+
 ## v0.1 的局限
 
 先说清楚什么**不支持**，免得你装完发现和想象的不一样：

@@ -64,6 +64,26 @@ Keep compositions dumb — they should render from props only. All timing
 comes from `metadata.json`, which `build-metadata.mjs` produces from WAV
 durations. This is the whole trick: **never count frames by hand**.
 
+## Network notes (China users)
+
+The pipeline downloads two things on first run:
+
+1. **Whisper model** from HuggingFace Hub (~150 MB for `base`)
+2. **Chrome Headless Shell** from `storage.googleapis.com` (Remotion uses it
+   to render the React video)
+
+Both hosts are blocked from mainland China without a proxy. Run with a
+proxy env var on first install:
+
+```bash
+HTTPS_PROXY=http://127.0.0.1:7897 \
+HTTP_PROXY=http://127.0.0.1:7897 \
+./scripts/render.sh examples/my-first
+```
+
+After the first successful run, both downloads are cached locally and
+subsequent renders work without proxy.
+
 ## Troubleshooting
 
 - **"Fish Audio 401"** — wrong API key or voice_id. Check the dashboard.
