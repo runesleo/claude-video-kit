@@ -1,0 +1,39 @@
+{
+  "title": "Schoger UI 5 tips (demo script)",
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "slides": [
+    {
+      "type": "cover",
+      "title": "5 个 UI 小细节",
+      "subtitle": "让你的界面立刻高级"
+    },
+    {
+      "type": "text",
+      "text": "按钮边框别用实色",
+      "voice_text": "按钮卡片的边框别用实色，改成灰色加 10% 透明度的 ring。实色边框叠阴影会糊成一坨，透明 ring 干净很多。"
+    },
+    {
+      "type": "text",
+      "text": "大标题字重别用最粗",
+      "voice_text": "大标题字重别用最粗的。试试 500 到 600 之间，再收紧字间距，视觉上精致很多。"
+    },
+    {
+      "type": "text",
+      "text": "Inter 大标题开 Display",
+      "voice_text": "如果你用 Inter 大标题记得开 Display 模式。Optical Sizing 打开之后笔画更锐利，大字小字各有各的最优形态。"
+    },
+    {
+      "type": "code",
+      "language": "css",
+      "code": "font-family: 'Geist Mono';\ntext-transform: uppercase;\nletter-spacing: 0.12em;",
+      "voice_text": "分区的小标签换成等宽字体，全大写，加宽字间距，一秒钟多一层设计感。"
+    },
+    {
+      "type": "cover",
+      "title": "就是这 5 条",
+      "subtitle": "试试看"
+    }
+  ]
+}

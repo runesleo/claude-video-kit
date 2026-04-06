@@ -1,0 +1,14 @@
+node_modules/
+out/
+**/*.wav
+**/*.mp4
+**/*.mp3
+__pycache__/
+*.pyc
+.venv/
+.env
+.env.local
+.DS_Store
+examples/*/metadata.json
+examples/*/captions.json
+!examples/schoger-demo/script.json
