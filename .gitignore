@@ -1,5 +1,6 @@
 node_modules/
 out/
+docs/plans/
 **/*.wav
 **/*.mp4
 **/*.mp3

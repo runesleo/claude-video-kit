@@ -25,26 +25,23 @@ you can exercise end-to-end on day 1. Voice quality will be rough.
 
 ## 2. Your first video
 
-```bash
-mkdir -p examples/my-first
-cat > examples/my-first/script.json <<'JSON'
-{
-  "title": "hello",
-  "fps": 30,
-  "width": 1080,
-  "height": 1920,
-  "slides": [
-    { "type": "cover", "title": "Hello world", "subtitle": "in 10 seconds" },
-    { "type": "text",  "text": "This is my first AI-rendered video.",
-      "voice_text": "This is my first AI-rendered video." }
-  ]
-}
-JSON
+The repo ships with `examples/my-first/` — a 3-slide starter template
+already wired up. Just run it:
 
+```bash
 ./scripts/render.sh examples/my-first
 ```
 
 Output lands in `examples/my-first/out/full.mp4`.
+
+To make it your own, edit `examples/my-first/script.json` and run again.
+Or copy the folder to a new name:
+
+```bash
+cp -r examples/my-first examples/my-second
+$EDITOR examples/my-second/script.json
+./scripts/render.sh examples/my-second
+```
 
 ## 3. Iterate
 
