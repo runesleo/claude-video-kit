@@ -104,11 +104,12 @@ v0.1 在 mac (Apple Silicon) 上端到端跑通了 `examples/my-first`，产出 
 
 先说清楚什么**不支持**，免得你装完发现和想象的不一样：
 
+- **`say` 兜底只用于"管线能跑通"，要发的视频请上 Fish Audio。** 没填 API key 的时候，TTS 会降级到 macOS 自带的 `say`。这条路够你验证整个管线，但有两个真实痛点：(a) 中文多音字会读错，比如 `一行代码` 的"行"会被读成 háng；(b) Whisper `base` 模型对合成腔的字幕对齐差一拍。换成 Fish Audio 的真人声音，两个问题都消失。
 - 没有自动封面生成器 — 封面就是 `cover` slide 渲出来的样子
 - 没有 B-roll / 视频片段支持 — slide 都是静帧 + 音频 + 字幕
 - 一条视频一个声音（schema 留了 per-slide 声音覆盖，但还没大量测试）
-- IndexTTS2 后端只是占位 — 脚本写了，但具体 CUDA 环境差异太大没法通用，留给你自己接
-- 中文是主测语言，其他语言能跑但字幕质量取决于 Whisper 模型大小
+- IndexTTS2 后端只是占位 — 脚本写了，CUDA 部分留给你自己接
+- 中文是主测语言，其他语言能跑但字幕质量取决于 Whisper 模型大小（`base` → `medium` → `large-v3`）
 
 ## 后续计划
 
