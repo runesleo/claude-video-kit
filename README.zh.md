@@ -87,7 +87,14 @@ cp .env.example .env   # 填 FISH_AUDIO_API_KEY, FISH_AUDIO_VOICE_ID
 | `text` | 文字 + 旁白 | `text`, `voice_text` | `voice` |
 | `code` | 代码展示 + 旁白 | `code`, `language`, `voice_text` | `voice` |
 
+**`voice_text`** 是旁白文案 — 和屏幕上的 `text` 字段分开，这样旁白可以比屏幕显示的更自然口语化。**`voice`** 是这一条 slide 单独覆盖的 Fish Audio 声音 ID（不写就用全局默认的）。
+
 不够用？在 `remotion/src/compositions/` 扔一个新组件，在 `Root.tsx` 注册一下就能用。详见 `docs/quickstart.md`。
+
+## 仓库里的两个示例
+
+- **`examples/my-first/`** — 3 个 slide 的极简起手模板。复制这个文件夹，改 `script.json`，渲染，搞定。最快出第一条视频的路径。
+- **`examples/schoger-demo/`** — [我在 X 上发的第一条 AI 视频](https://x.com/runes_leo)的脚本。当作"真实成品长什么样"的参考留着（不含素材，只有脚本）。
 
 ## v0.1 的局限
 

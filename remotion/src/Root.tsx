@@ -27,6 +27,14 @@ export type SlideMeta = {
   durationInFrames: number;
   audio?: string;
   captions?: Array<{ from: number; to: number; text: string }>;
+  /**
+   * Narration text consumed by scripts/tts.py.
+   * Separate from on-screen `text` so the voice-over can be more natural
+   * than what the slide shows.
+   */
+  voice_text?: string;
+  /** Optional per-slide voice ID override (otherwise uses FISH_AUDIO_VOICE_ID). */
+  voice?: string;
   title?: string;
   subtitle?: string;
   text?: string;

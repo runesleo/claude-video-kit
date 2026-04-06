@@ -1,0 +1,24 @@
+{
+  "title": "我的第一条视频",
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "slides": [
+    {
+      "type": "cover",
+      "title": "Hello world",
+      "subtitle": "10 秒说清楚"
+    },
+    {
+      "type": "text",
+      "text": "这是我用代码做的第一条视频",
+      "voice_text": "这是我用代码做的第一条视频，全程没有录屏，没有剪辑。"
+    },
+    {
+      "type": "code",
+      "language": "ts",
+      "code": "const video = await kit.render(script);",
+      "voice_text": "一行代码，一个视频文件。"
+    }
+  ]
+}

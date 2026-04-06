@@ -83,7 +83,14 @@ That's it. No video editor, no recording gear, no timeline.
 | `text` | Narrated text slide | `text`, `voice_text` | `voice` |
 | `code` | Code-as-video blocks | `code`, `language`, `voice_text` | `voice` |
 
-Add your own by dropping a new composition into `remotion/src/compositions/` and registering it in `Root.tsx`. See `docs/quickstart.md`.
+**`voice_text`** is the narration script — kept separate from on-screen `text` so your voice-over can be more natural than what the slide shows. **`voice`** overrides the default Fish Audio voice ID for that slide.
+
+Add your own slide type by dropping a new composition into `remotion/src/compositions/` and registering it in `Root.tsx`. See `docs/quickstart.md`.
+
+## Examples in this repo
+
+- **`examples/my-first/`** — 3-slide starter template. Copy this folder, edit `script.json`, render. The fastest way to get a working video.
+- **`examples/schoger-demo/`** — the script behind [my first AI-generated short on X](https://x.com/runes_leo). A worked example of a real shipped video, kept for reference (assets not included, only the script).
 
 ## Known limitations (v0.1)
 
