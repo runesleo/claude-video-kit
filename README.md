@@ -1,110 +1,125 @@
 # claude-video-kit
 
-> AI-powered short-form video pipeline. Write a script → get a rendered vertical video.
-> **TTS** (Fish Audio / IndexTTS2) + **Caption alignment** (Whisper) + **Code-as-video** (Remotion).
+Turn a JSON script into a vertical short video. TTS + Whisper caption alignment + Remotion render, all automated. Built for people who'd rather write code than open a video editor.
 
-[中文说明](./README.zh.md) · [Quickstart](./docs/quickstart.md) · [Example](./examples/schoger-demo/)
+## What you get
 
-Built and used daily by **[@runes_leo](https://x.com/runes_leo)** — an AI × Crypto independent builder. This is the same pipeline behind [my first AI-generated short](https://x.com/runes_leo).
+- **One-command pipeline** — `./scripts/render.sh <project>` runs TTS, alignment, metadata build, and Remotion render end-to-end.
+- **Metadata-driven timing** — slide durations computed from actual WAV length, no manual frame counting.
+- **Composable slides** — `cover`, `text`, `code` compositions out of the box, each drop-in replaceable.
+- **Dual TTS backends** — Fish Audio API (default, excellent Chinese cloning) or local IndexTTS2 (free, GPU required).
+- **Word-level captions** — faster-whisper produces frame-accurate caption tracks that burn into the render.
+- **Remotion Studio hot reload** — iterate on compositions in React with live preview.
 
----
-
-## Why
-
-Short-form vertical videos (TikTok / YouTube Shorts / Bilibili) are the highest-leverage content format right now, but the production cost is brutal: record voice, shoot B-roll, edit, caption, export. Most builders give up after video #1.
-
-This kit turns video production into **"write a JSON script → run one command"**. Your content is literally code — diffable, versionable, and iteratable. If you already live in a terminal, you'll love it.
+## How it works
 
 ```
-script.json  ──▶  TTS  ──▶  *.wav  ──▶  Whisper align  ──▶  captions.json
-                                                                    │
-                                       build-metadata ◀─────────────┘
-                                              │
-                                              ▼
-                                      Remotion render
-                                              │
-                                              ▼
-                                         out/full.mp4
+script.json ──▶ TTS ──▶ *.wav ──▶ Whisper align ──▶ captions.json
+                                                            │
+                                  build-metadata ◀──────────┘
+                                         │
+                                         ▼
+                                  Remotion render ──▶ out/full.mp4
 ```
 
-## Stack
-
-| Layer | Tool | Why |
-|---|---|---|
-| TTS (default) | **[Fish Audio](https://fish.audio/?code=VCG6XOES4XIY2)** | Best CN voice cloning, API is trivial. Uses my referral code — both of us get credits. |
-| TTS (advanced) | **IndexTTS2** (local) | Offline, free, needs a GPU. See `docs/indextts2.md`. |
-| Caption alignment | **Whisper** (`whisper.cpp` or `faster-whisper`) | Word-level timestamps for burned-in captions. |
-| Video engine | **[Remotion](https://remotion.dev)** | Write video in React. Hot-reload, TypeScript, git-friendly. |
-
-## Install
-
-```bash
-git clone https://github.com/runesleo/claude-video-kit.git
-cd claude-video-kit
-
-# JS (Remotion)
-cd remotion && npm install && cd ..
-
-# Python (TTS + Whisper)
-pip install -r scripts/requirements.txt
-
-# Env
-cp .env.example .env  # fill in FISH_AUDIO_API_KEY
-```
-
-## Quickstart
-
-```bash
-# 1. Write a script
-$EDITOR examples/my-first/script.json
-
-# 2. Generate voices + align captions + build metadata
-./scripts/render.sh examples/my-first
-
-# 3. Done → out/full.mp4
-```
-
-See [`docs/quickstart.md`](./docs/quickstart.md) for the full walkthrough.
-
-## Script format
-
+**Input** (`examples/my-first/script.json`):
 ```json
 {
   "title": "My first AI video",
+  "fps": 30,
   "width": 1080,
   "height": 1920,
-  "fps": 30,
   "slides": [
-    { "type": "cover", "title": "Your idea", "subtitle": "in 30 seconds" },
-    { "type": "text",  "text": "First point", "voice": "steady-male" },
-    { "type": "code",  "language": "ts", "code": "const x = 1;", "voice": "steady-male" }
+    { "type": "cover", "title": "Hello world", "subtitle": "in 10 seconds" },
+    { "type": "text",  "text": "This is my first AI-rendered video.",
+      "voice_text": "This is my first AI-rendered video." },
+    { "type": "code",  "language": "ts",
+      "code": "const video = await kit.render(script);",
+      "voice_text": "One function call, one video file." }
   ]
 }
 ```
 
-Each slide's duration is **computed from the generated WAV** — no manual frame counting.
+**Run**:
+```bash
+./scripts/render.sh examples/my-first
+```
 
-## Status
+**Output**: `examples/my-first/out/full.mp4` — a 1080×1920 vertical video with narration and captions, timed exactly to the generated audio.
 
-`v0.1` · Used daily, rough edges expected. Star the repo if you want to follow along.
+## Setup
+
+**Clone and install:**
+```bash
+git clone https://github.com/runesleo/claude-video-kit.git
+cd claude-video-kit
+cd remotion && npm install && cd ..
+pip install -r scripts/requirements.txt
+cp .env.example .env   # fill FISH_AUDIO_API_KEY, FISH_AUDIO_VOICE_ID
+```
+
+**Any AI coding agent:**
+Point your agent at `docs/quickstart.md` and `examples/schoger-demo/`. The whole pipeline is four scripts — an agent can read, modify, and run it without framework knowledge.
+
+## Requirements
+
+- Node 20+
+- Python 3.10+
+- ffmpeg (`brew install ffmpeg`)
+- Fish Audio API key (default TTS) — or skip it and use the macOS `say` fallback for local testing
+- (Optional) CUDA GPU if you want to run IndexTTS2 locally
+
+New to Fish Audio? [Create an account here](https://fish.audio/?code=VCG6XOES4XIY2) — best-in-class Chinese voice cloning with a trivial API.
+
+That's it. No video editor, no recording gear, no timeline.
+
+## Supported slide types
+
+| Type | Purpose | Required fields | Optional fields |
+|------|---------|----------------|----------------|
+| `cover` | Opening / closing cards | `title` | `subtitle` |
+| `text` | Narrated text slide | `text`, `voice_text` | `voice` |
+| `code` | Code-as-video blocks | `code`, `language`, `voice_text` | `voice` |
+
+Add your own by dropping a new composition into `remotion/src/compositions/` and registering it in `Root.tsx`. See `docs/quickstart.md`.
+
+## Known limitations (v0.1)
+
+- No automatic cover generator — covers are whatever the `cover` slide renders
+- No B-roll / video clip support — slides are still-frame + audio + captions
+- Single voice per video (though per-slide voice override is in the schema)
+- IndexTTS2 backend is a placeholder — script is documented, wiring is left to the user due to CUDA environment variance
+- Chinese is the primary tested language; other languages work but captioning quality depends on Whisper model size
 
 ## Roadmap
 
-- [ ] v0.2 — AI-generated B-roll clips (no more screen recording)
-- [ ] v0.3 — Auto cover generator
-- [ ] v0.4 — Multi-voice conversations
-- [ ] v1.0 — Web UI for non-coders
+**Pipeline**
+- [ ] v0.2 — AI-generated B-roll clips (SDXL / video models for visual variety)
+- [ ] v0.3 — Auto cover image generator (1080×1920, platform-aware)
+- [ ] v0.4 — Multi-voice conversations (multiple voice IDs per script)
 
-## Credits & affiliate disclosure
+**Compositions**
+- [ ] Chart slide (render data as animated SVG)
+- [ ] Diff slide (before/after comparison, Schoger-style)
+- [ ] Diagram slide (Mermaid → animated reveal)
 
-This project uses **[Fish Audio](https://fish.audio/?code=VCG6XOES4XIY2)** for TTS by default. The link is a referral code — if you sign up through it, I get credits at no cost to you. You can also use IndexTTS2 locally and skip it entirely.
+**Tooling**
+- [ ] Web UI — non-coders can edit scripts in a browser
+- [ ] `kit init` CLI — scaffold new video projects without copying examples
 
-Also: if you're into prediction markets, I trade on **[Polymarket](https://polymarket.com/?via=runesleo)** (also a referral link) and open-source my tooling at [claude-prediction-toolkit](https://github.com/runesleo/claude-prediction-toolkit).
+**API** (planned)
+- [ ] REST endpoint for render-as-a-service — POST a script, receive an MP4
+
+## About the author
+
+Leo ([@runes_leo](https://x.com/runes_leo)) — AI × Crypto independent builder.
+
+I use Claude Code to build two things:
+- **Prediction market trading** on [Polymarket](https://polymarket.com/?via=runes-leo&r=runesleo&utm_source=github&utm_content=claude-video-kit) — quant strategies and market making. Open tooling at [claude-prediction-toolkit](https://github.com/runesleo/claude-prediction-toolkit).
+- **Content automation** like this repo — pipelines that let one person ship at the pace of a team.
+
+More at [leolabs.me](https://leolabs.me).
 
 ## License
 
-MIT © Leo ([@runes_leo](https://x.com/runes_leo))
-
----
-
-<sub>Built with [Claude Code](https://claude.com/claude-code). If you ship something with this kit, tag me — I'd love to see it.</sub>
+MIT
