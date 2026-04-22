@@ -132,14 +132,13 @@ v0.1 在 mac (Apple Silicon) 上端到端跑通了 `examples/my-first`，产出 
 
 ## 关于作者
 
-Leo（[@runes_leo](https://x.com/runes_leo)）— AI × Crypto 独立构建者。
+*关于作者：Leo（[@runes_leo](https://x.com/runes_leo)），AI x Crypto 独立构建者。在 [Polymarket](https://polymarket.com/?r=githuball&via=runes-leo&utm_source=github&utm_content=claude-video-kit) 做量化交易，用 Claude Code 和 Codex 搭建数据分析与自动化交易系统。*
 
-我用 Claude Code 做两件事：
+[leolabs.me](https://leolabs.me)：文章 · 社群 · 开源工具 · 独立项目 · 全平台账号
 
-- **预测市场量化交易** — 在 [Polymarket](https://polymarket.com/?via=runes-leo&r=runesleo&utm_source=github&utm_content=claude-video-kit) 做量化策略和做市。相关工具开源在 [claude-prediction-toolkit](https://github.com/runesleo/claude-prediction-toolkit)
-- **内容自动化** — 比如这个 repo。一个人能跑出团队的输出节奏，靠的是把重复环节全部代码化
+[X 订阅](https://x.com/runes_leo/creator-subscriptions/subscribe)：付费内容周更，或请我喝杯咖啡 😁
 
-更多实战分享：[leolabs.me](https://leolabs.me)
+*Learn in public, Build in public.*
 
 ## 许可
 
