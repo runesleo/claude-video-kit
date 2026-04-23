@@ -9,43 +9,71 @@ import {
 import { CoverSlide } from "./compositions/CoverSlide";
 import { TextSlide } from "./compositions/TextSlide";
 import { CodeSlide } from "./compositions/CodeSlide";
+import { ContentSlide } from "./compositions/ContentSlide";
+import { TableSlide, TableCell } from "./compositions/TableSlide";
+import { FormulaSlide, FormulaGroup } from "./compositions/FormulaSlide";
+import { TransitionSlide } from "./compositions/TransitionSlide";
+import { BrandConfig } from "./compositions/BrandedSlideLayout";
 
 /**
  * Metadata is produced by scripts/build-metadata.mjs after TTS + Whisper.
- * Shape:
- * {
- *   title: string;
- *   width: number; height: number; fps: number;
- *   slides: Array<{
- *     type: "cover" | "text" | "code";
- *     durationInFrames: number;
- *     audio?: string;           // relative path inside workspace/
- *     captions?: Array<{ from: number; to: number; text: string }>;
- *     // slide-specific fields:
- *     title?: string; subtitle?: string;      // cover
- *     text?: string;                           // text
- *     language?: string; code?: string;        // code
- *   }>;
- * }
+ *
+ * Core slide types (minimal, generic):
+ *   cover | text | code
+ *
+ * Rich slide types (branded, animated, built for data-heavy videos):
+ *   content    — title + optional badge + bullets or body
+ *   table      — title + headers + rows (with number-rolling animation)
+ *   formula    — title + groups of colored token pills
+ *   transition — big centered title + optional bullets
+ *
+ * All rich types accept a top-level `brand` prop in Metadata to stamp a
+ * consistent watermark + accent color across the whole video.
  */
 export type SlideMeta = {
-  type: "cover" | "text" | "code";
+  type:
+    | "cover"
+    | "text"
+    | "code"
+    | "content"
+    | "table"
+    | "formula"
+    | "transition";
   durationInFrames: number;
   audio?: string;
   captions?: Array<{ from: number; to: number; text: string }>;
-  /**
-   * Narration text consumed by scripts/tts.py.
-   * Separate from on-screen `text` so the voice-over can be more natural
-   * than what the slide shows.
-   */
   voice_text?: string;
-  /** Optional per-slide voice ID override (otherwise uses FISH_AUDIO_VOICE_ID). */
   voice?: string;
+
+  // common
   title?: string;
   subtitle?: string;
+
+  // text
   text?: string;
+
+  // code
   language?: string;
   code?: string;
+
+  // content / transition
+  bullets?: string[];
+  body?: string;
+  badge?: string;
+  badgeGradient?: [string, string];
+
+  // table
+  tableData?: {
+    headers: string[];
+    rows: TableCell[][];
+    footer?: string;
+    animateNumbers?: boolean;
+  };
+
+  // formula
+  formulaGroups?: FormulaGroup[];
+  formulaCaption?: string;
+  formulaPrefix?: string;
 };
 
 export type Metadata = {
@@ -54,9 +82,10 @@ export type Metadata = {
   height: number;
   fps: number;
   slides: SlideMeta[];
+  /** Brand watermark config applied to all branded slide types */
+  brand?: BrandConfig;
 };
 
-// Fallback metadata so `remotion studio` works without running the pipeline.
 const DEFAULT_METADATA: Metadata = {
   title: "claude-video-kit demo",
   width: 1080,
@@ -83,19 +112,17 @@ const DEFAULT_METADATA: Metadata = {
   ],
 };
 
-/**
- * Main receives the Metadata directly as its props (not wrapped in a
- * `metadata` key), which matches what scripts/build-metadata.mjs writes
- * to <project>/metadata.json. The CLI flag --props=<json> sets the entire
- * props object of this component.
- */
 const Main: React.FC<Metadata> = (meta) => {
+  const total = meta.slides.length;
   let offset = 0;
+
   return (
     <AbsoluteFill style={{ backgroundColor: "#0b0b0f" }}>
       {meta.slides.map((slide, i) => {
         const from = offset;
         offset += slide.durationInFrames;
+        const slideNumber = i + 1;
+
         return (
           <Sequence
             key={i}
@@ -103,6 +130,7 @@ const Main: React.FC<Metadata> = (meta) => {
             durationInFrames={slide.durationInFrames}
           >
             {slide.audio ? <Audio src={staticFile(slide.audio)} /> : null}
+
             {slide.type === "cover" && (
               <CoverSlide title={slide.title ?? ""} subtitle={slide.subtitle} />
             )}
@@ -114,6 +142,54 @@ const Main: React.FC<Metadata> = (meta) => {
                 code={slide.code ?? ""}
                 language={slide.language ?? "ts"}
                 captions={slide.captions}
+              />
+            )}
+            {slide.type === "content" && (
+              <ContentSlide
+                slideNumber={slideNumber}
+                totalSlides={total}
+                durationInFrames={slide.durationInFrames}
+                brand={meta.brand}
+                title={slide.title ?? ""}
+                bullets={slide.bullets}
+                body={slide.body}
+                badge={slide.badge}
+                badgeGradient={slide.badgeGradient}
+              />
+            )}
+            {slide.type === "table" && slide.tableData && (
+              <TableSlide
+                slideNumber={slideNumber}
+                totalSlides={total}
+                durationInFrames={slide.durationInFrames}
+                brand={meta.brand}
+                title={slide.title ?? ""}
+                headers={slide.tableData.headers}
+                rows={slide.tableData.rows}
+                footer={slide.tableData.footer}
+                animateNumbers={slide.tableData.animateNumbers}
+              />
+            )}
+            {slide.type === "formula" && slide.formulaGroups && (
+              <FormulaSlide
+                slideNumber={slideNumber}
+                totalSlides={total}
+                durationInFrames={slide.durationInFrames}
+                brand={meta.brand}
+                title={slide.title ?? ""}
+                groups={slide.formulaGroups}
+                caption={slide.formulaCaption}
+                prefix={slide.formulaPrefix}
+              />
+            )}
+            {slide.type === "transition" && (
+              <TransitionSlide
+                slideNumber={slideNumber}
+                totalSlides={total}
+                durationInFrames={slide.durationInFrames}
+                brand={meta.brand}
+                title={slide.title ?? ""}
+                bullets={slide.bullets}
               />
             )}
           </Sequence>
@@ -131,9 +207,6 @@ export const Root: React.FC = () => {
     <Composition
       id="Main"
       component={Main}
-      // Placeholders; calculateMetadata reads the real values from props
-      // (the entire props object IS the Metadata, set via --props=<json>
-      // from scripts/render.sh).
       durationInFrames={1}
       fps={30}
       width={1080}

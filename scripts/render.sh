@@ -18,8 +18,16 @@ fi
 PROJECT="$(cd "$PROJECT" && pwd)"
 KIT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-echo "▶ [1/4] TTS"
-python3 "$KIT_ROOT/scripts/tts.py" "$PROJECT"
+echo "▶ [1/4] TTS (backend: ${TTS_BACKEND:-fish})"
+PYTHON="${PYTHON:-python3}"
+case "${TTS_BACKEND:-fish}" in
+  indextts2)
+    "$PYTHON" "$KIT_ROOT/scripts/tts_indextts2.py" "$PROJECT"
+    ;;
+  fish|*)
+    "$PYTHON" "$KIT_ROOT/scripts/tts.py" "$PROJECT"
+    ;;
+esac
 
 echo "▶ [2/4] Whisper align"
 python3 "$KIT_ROOT/scripts/align.py" "$PROJECT" || echo "  (align failed, continuing without captions)"
