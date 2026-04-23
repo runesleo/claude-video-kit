@@ -105,12 +105,67 @@ This release was end-to-end tested on macOS (Apple Silicon) with `examples/my-fi
 - IndexTTS2 backend is a placeholder — script is documented, CUDA wiring is left to the user
 - Chinese is the primary tested language; other languages work but captioning quality scales with Whisper model size (`base` → `medium` → `large-v3`)
 
+## What's new in v0.2 — post-render pipeline
+
+The v0.1 pipeline stopped at `out/full.mp4`. v0.2 adds the "every time you make
+a video, you end up redoing this" steps into composable scripts you can chain
+or ignore:
+
+- **`scripts/prepend-cover.sh`** — prepend a still-image cover clip (default
+  3s) to the rendered video. Probes the main video's width/height/fps and
+  matches them exactly so concat stays lossless. Falls back to re-encode only
+  if codec params differ.
+- **`scripts/shift-subtitles.py`** — shift every timestamp in an `.srt` by a
+  fixed offset. Pair with `prepend-cover.sh` when you need captions to stay
+  aligned after adding an intro.
+- **`scripts/build-distribute-pack.mjs`** — emit per-platform upload packages
+  (Bilibili / YouTube / Xiaohongshu / Douyin) with chapter timestamps derived
+  from `metadata.json`. Supports a blacklist-based compliance pass that strips
+  regulator-sensitive words while keeping brand names — stripping brands costs
+  vertical-search discoverability.
+- **Pre-render review gate** (see [`docs/pre-render-review.md`](docs/pre-render-review.md))
+  — a manual convention: before TTS + render, have a second model read the
+  script. TTS + render costs ~30 min per iteration; 5 min of review usually
+  avoids 2 hours of rerun.
+
+Typical chained usage:
+
+```bash
+# 1. Render as usual (v0.1)
+./scripts/render.sh examples/my-first
+
+# 2. Prepend cover
+./scripts/prepend-cover.sh \
+  --cover my-cover.png \
+  --video examples/my-first/out/full.mp4 \
+  --duration 3 \
+  --out examples/my-first/out/full-with-cover.mp4
+
+# 3. Generate per-platform packages (chapters shift with the intro automatically)
+node ./scripts/build-distribute-pack.mjs examples/my-first --intro-offset 3
+```
+
+`shift-subtitles.py` is an optional utility for the case where you keep a
+separate `.srt` file outside the v0.1 pipeline (e.g. exported from Whisper
+and used as an overlay). The v0.1 pipeline burns captions during Remotion
+render, so most users don't need it.
+
+```bash
+./scripts/shift-subtitles.py \
+  --input path/to/captions.srt \
+  --offset-seconds 3 \
+  --output path/to/captions-with-intro.srt
+```
+
+Each script is self-contained and independently runnable — use the ones you
+need, skip the rest.
+
 ## Roadmap
 
 **Pipeline**
-- [ ] v0.2 — AI-generated B-roll clips (SDXL / video models for visual variety)
-- [ ] v0.3 — Auto cover image generator (1080×1920, platform-aware)
-- [ ] v0.4 — Multi-voice conversations (multiple voice IDs per script)
+- [ ] v0.3 — AI-generated B-roll clips (SDXL / video models for visual variety)
+- [ ] v0.4 — Auto cover image generator (1080×1920, platform-aware)
+- [ ] v0.5 — Multi-voice conversations (multiple voice IDs per script)
 
 **Compositions**
 - [ ] Chart slide (render data as animated SVG)

@@ -111,12 +111,60 @@ v0.1 在 mac (Apple Silicon) 上端到端跑通了 `examples/my-first`，产出 
 - IndexTTS2 后端只是占位 — 脚本写了，CUDA 部分留给你自己接
 - 中文是主测语言，其他语言能跑但字幕质量取决于 Whisper 模型大小（`base` → `medium` → `large-v3`）
 
+## v0.2 新增：成片后管线
+
+v0.1 管线到 `out/full.mp4` 就结束了。v0.2 把"每次做视频都得重做一遍"的那几步
+写成了独立脚本，用不用随你：
+
+- **`scripts/prepend-cover.sh`** — 把一张封面图作为 N 秒前插片头拼到渲染好的
+  视频开头（默认 3 秒）。会先读主视频的宽高和帧率，让前插 clip 完全对齐，
+  concat 走无损 copy；编码参数不一致才回退到重编码。
+- **`scripts/shift-subtitles.py`** — 把 `.srt` 里每条时间戳整体偏移一个固定秒数。
+  配合 `prepend-cover.sh` 用——加了片头之后字幕自动跟着往后挪。
+- **`scripts/build-distribute-pack.mjs`** — 从 `metadata.json` 累加每个 slide 的
+  时长生成章节时间戳，一次出齐 B站 / YouTube / 小红书 / 抖音 四平台的标题 /
+  简介 / 章节 / 标签。合规化用敏感词黑名单过滤（"博彩 / 赌博 / 下注 / 盈利"
+  这类），品牌名保留——把品牌名一起抹了 = 把自己从垂类搜索里拿掉。
+- **渲染前审稿闸**（见 [`docs/pre-render-review.md`](docs/pre-render-review.md)）
+  —— 一个约定，不是代码：文稿进 TTS + 渲染之前，让另一个模型读一遍。
+  TTS + 渲染一轮大概 30 分钟，5 分钟的审稿通常能免掉 2 小时重跑。
+
+典型串联用法：
+
+```bash
+# 1. 和 v0.1 一样渲染
+./scripts/render.sh examples/my-first
+
+# 2. 加封面片头
+./scripts/prepend-cover.sh \
+  --cover my-cover.png \
+  --video examples/my-first/out/full.mp4 \
+  --duration 3 \
+  --out examples/my-first/out/full-with-cover.mp4
+
+# 3. 生成四平台分发包（章节自动跟着片头偏移）
+node ./scripts/build-distribute-pack.mjs examples/my-first --intro-offset 3
+```
+
+`shift-subtitles.py` 是辅助工具——仅当你在 v0.1 管线之外另外维护了一份 `.srt`
+文件时（比如 Whisper 独立导出的字幕叠加用），才用到它。v0.1 管线的字幕是
+Remotion 渲染阶段直接烧进画面的，不走 srt，所以大部分用户不需要。
+
+```bash
+./scripts/shift-subtitles.py \
+  --input path/to/captions.srt \
+  --offset-seconds 3 \
+  --output path/to/captions-with-intro.srt
+```
+
+每个脚本都独立可跑——需要哪个用哪个，别的跳过。
+
 ## 后续计划
 
 **管线层**
-- [ ] v0.2 — AI 生成 B-roll 片段（用 SDXL / 视频模型做视觉变化）
-- [ ] v0.3 — 自动封面生成器（按平台出尺寸）
-- [ ] v0.4 — 多人对话（一条脚本多个声音）
+- [ ] v0.3 — AI 生成 B-roll 片段（用 SDXL / 视频模型做视觉变化）
+- [ ] v0.4 — 自动封面生成器（按平台出尺寸）
+- [ ] v0.5 — 多人对话（一条脚本多个声音）
 
 **新的 slide 类型**
 - [ ] 图表 slide（数据 → 动画 SVG）
