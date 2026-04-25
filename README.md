@@ -4,6 +4,8 @@
 
 Turn a JSON script into a vertical short video. TTS + Whisper caption alignment + Remotion render, all automated. Built for people who'd rather write code than open a video editor.
 
+> Editing scripts or compositions? Read [docs/DESIGN.md](docs/DESIGN.md) first — it's the design system contract.
+
 ## What you get
 
 - **One-command pipeline** — `./scripts/render.sh <project>` runs TTS, alignment, metadata build, and Remotion render end-to-end.
