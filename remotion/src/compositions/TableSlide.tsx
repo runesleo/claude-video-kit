@@ -6,7 +6,7 @@ import { NumberTicker, parseAnimatable } from "./NumberTicker";
 /** A cell: plain text, or `{text, color}` for styled cells */
 export type TableCell = string | { text: string; color?: string };
 
-export interface TableSlideProps {
+interface TableSlideProps {
   slideNumber: number;
   totalSlides: number;
   durationInFrames?: number;

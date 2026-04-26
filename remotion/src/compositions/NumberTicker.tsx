@@ -15,9 +15,7 @@ import { interpolate, useCurrentFrame } from "remotion";
  * Use in tables/cells to progressively animate from 0 → final value,
  * giving a "counter rolling" effect that feels alive versus static text.
  */
-export function parseAnimatable(
-  text: string,
-): [string, number, string] | null {
+export function parseAnimatable(text: string): [string, number, string] | null {
   const m = text.match(/^([+\-]?[<>]?\$?)([\d,]+(?:\.\d+)?)(.*)$/);
   if (!m) return null;
   const numStr = m[2].replace(/,/g, "");
@@ -26,7 +24,7 @@ export function parseAnimatable(
   return [m[1], num, m[3]];
 }
 
-export interface NumberTickerProps {
+interface NumberTickerProps {
   prefix: string;
   value: number;
   suffix: string;
