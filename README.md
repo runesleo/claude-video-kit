@@ -1,6 +1,6 @@
 # claude-video-kit
 
-**English** · [中文](./README.zh.md)
+**English** · [中文](./README.zh-CN.md)
 
 Turn a JSON script into a vertical short video. TTS + Whisper caption alignment + Remotion render, all automated. Built for people who'd rather write code than open a video editor.
 
