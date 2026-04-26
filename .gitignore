@@ -1,5 +1,7 @@
 node_modules/
 out/
+checkpoints/
+experiments/hyperframes/upstream/
 docs/plans/
 **/*.wav
 **/*.mp4
