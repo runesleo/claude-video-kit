@@ -11,7 +11,7 @@ export interface FormulaGroup {
   color?: "green" | "red" | "blue" | "gold" | "orange";
 }
 
-export interface FormulaSlideProps {
+interface FormulaSlideProps {
   slideNumber: number;
   totalSlides: number;
   durationInFrames?: number;
@@ -31,7 +31,11 @@ const COLOR_MAP = {
   red: { bg: "rgba(239, 68, 68, 0.15)", border: "#ef4444", text: "#ef4444" },
   blue: { bg: "rgba(16, 96, 176, 0.15)", border: "#1060b0", text: "#1060b0" },
   gold: { bg: "rgba(240, 192, 64, 0.15)", border: "#f0c040", text: "#f0c040" },
-  orange: { bg: "rgba(238, 148, 62, 0.15)", border: "#ee943e", text: "#ee943e" },
+  orange: {
+    bg: "rgba(238, 148, 62, 0.15)",
+    border: "#ee943e",
+    text: "#ee943e",
+  },
 };
 
 /**
@@ -166,7 +170,10 @@ export const FormulaSlide: React.FC<FormulaSlideProps> = ({
             color: "#9ca3af",
             opacity: interpolate(
               frame,
-              [GROUP_OFFSET + tokenCount * TOKEN_STAGGER + 10, GROUP_OFFSET + tokenCount * TOKEN_STAGGER + 30],
+              [
+                GROUP_OFFSET + tokenCount * TOKEN_STAGGER + 10,
+                GROUP_OFFSET + tokenCount * TOKEN_STAGGER + 30,
+              ],
               [0, 1],
               { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
             ),

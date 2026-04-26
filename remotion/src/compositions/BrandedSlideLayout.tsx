@@ -18,7 +18,7 @@ export interface BrandConfig {
   accentColor?: string;
 }
 
-export interface BrandedSlideLayoutProps {
+interface BrandedSlideLayoutProps {
   children: React.ReactNode;
   /** Current slide number (1-indexed) for counter */
   slideNumber: number;
@@ -74,12 +74,10 @@ export const BrandedSlideLayout: React.FC<BrandedSlideLayoutProps> = ({
   });
 
   const exitOpacity = durationInFrames
-    ? interpolate(
-        frame,
-        [durationInFrames - 12, durationInFrames],
-        [1, 0.15],
-        { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
-      )
+    ? interpolate(frame, [durationInFrames - 12, durationInFrames], [1, 0.15], {
+        extrapolateLeft: "clamp",
+        extrapolateRight: "clamp",
+      })
     : 1;
 
   const opacity = enterOpacity * exitOpacity;

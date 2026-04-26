@@ -2,7 +2,7 @@ import React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { BrandedSlideLayout, BrandConfig } from "./BrandedSlideLayout";
 
-export interface ContentSlideProps {
+interface ContentSlideProps {
   slideNumber: number;
   totalSlides: number;
   durationInFrames?: number;

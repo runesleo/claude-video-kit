@@ -30,7 +30,7 @@ import { BrandConfig } from "./compositions/BrandedSlideLayout";
  * All rich types accept a top-level `brand` prop in Metadata to stamp a
  * consistent watermark + accent color across the whole video.
  */
-export type SlideMeta = {
+type SlideMeta = {
   type:
     | "cover"
     | "text"
@@ -76,7 +76,7 @@ export type SlideMeta = {
   formulaPrefix?: string;
 };
 
-export type Metadata = {
+type Metadata = {
   title: string;
   width: number;
   height: number;
