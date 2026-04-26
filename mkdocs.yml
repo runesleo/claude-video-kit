@@ -1,0 +1,21 @@
+# Static documentation site (MkDocs). Build locally: pip install mkdocs && mkdocs build
+# Site output directory: site/ (gitignored)
+site_name: claude-video-kit
+site_description: JSON script to vertical short video — TTS, captions, Remotion
+site_url: https://github.com/runesleo/claude-video-kit
+
+docs_dir: docs
+
+theme:
+  name: mkdocs
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Design system: DESIGN.md
+  - Pre-render review: pre-render-review.md
+  - IndexTTS2: indextts2.md
+
+markdown_extensions:
+  - toc:
+      permalink: true
