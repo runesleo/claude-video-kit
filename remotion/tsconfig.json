@@ -9,5 +9,5 @@
     "skipLibCheck": true,
     "lib": ["DOM", "ES2020"]
   },
-  "include": ["src"]
+  "include": ["src", "remotion.config.ts"]
 }
