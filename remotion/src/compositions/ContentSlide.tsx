@@ -17,6 +17,8 @@ interface ContentSlideProps {
   badge?: string;
   /** Badge gradient (from, to). Default: red gradient (for "pit" badges) */
   badgeGradient?: [string, string];
+  /** Multiplier for all font sizes (driven by preset). */
+  fontScale?: number;
 }
 
 /**
@@ -37,6 +39,7 @@ export const ContentSlide: React.FC<ContentSlideProps> = ({
   body,
   badge,
   badgeGradient = ["#ef4444", "#dc2626"],
+  fontScale = 1,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -79,7 +82,7 @@ export const ContentSlide: React.FC<ContentSlideProps> = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 36,
+              fontSize: 36 * fontScale,
               fontWeight: 800,
               color: "#fff",
               transform: `scale(${interpolate(badgeSpring, [0, 1], [0.5, 1])})`,
@@ -92,7 +95,7 @@ export const ContentSlide: React.FC<ContentSlideProps> = ({
         )}
         <div
           style={{
-            fontSize: 52,
+            fontSize: 52 * fontScale,
             fontWeight: 700,
             color: "#f9fafb",
             opacity: titleOpacity,
@@ -133,7 +136,7 @@ export const ContentSlide: React.FC<ContentSlideProps> = ({
                 />
                 <div
                   style={{
-                    fontSize: 34,
+                    fontSize: 34 * fontScale,
                     color: "#e5e7eb",
                     lineHeight: 1.8,
                   }}
@@ -147,7 +150,7 @@ export const ContentSlide: React.FC<ContentSlideProps> = ({
       ) : body ? (
         <div
           style={{
-            fontSize: 34,
+            fontSize: 34 * fontScale,
             color: "#e5e7eb",
             lineHeight: 2,
             maxWidth: 1400,

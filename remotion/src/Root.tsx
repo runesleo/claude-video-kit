@@ -54,6 +54,12 @@ type SlideMeta = {
 
   // text
   text?: string;
+  /** TextSlide mode: "default" balanced, "hero" big-font hook moment. */
+  textMode?: "default" | "hero";
+  /** TextSlide hero reveal style: "spring" or "typewriter". */
+  textReveal?: "spring" | "typewriter";
+  /** Accent color for TextSlide hero glow / NumberHero. */
+  accentColor?: string;
 
   // code
   language?: string;
@@ -157,10 +163,21 @@ const Main: React.FC<Metadata> = (meta) => {
             {slide.audio ? <Audio src={staticFile(slide.audio)} /> : null}
 
             {slide.type === "cover" && (
-              <CoverSlide title={slide.title ?? ""} subtitle={slide.subtitle} />
+              <CoverSlide
+                title={slide.title ?? ""}
+                subtitle={slide.subtitle}
+                fontScale={fontScale}
+              />
             )}
             {slide.type === "text" && (
-              <TextSlide text={slide.text ?? ""} captions={slide.captions} />
+              <TextSlide
+                text={slide.text ?? ""}
+                captions={slide.captions}
+                mode={slide.textMode}
+                reveal={slide.textReveal}
+                accentColor={slide.accentColor}
+                fontScale={fontScale}
+              />
             )}
             {slide.type === "code" && (
               <CodeSlide
@@ -180,6 +197,7 @@ const Main: React.FC<Metadata> = (meta) => {
                 body={slide.body}
                 badge={slide.badge}
                 badgeGradient={slide.badgeGradient}
+                fontScale={fontScale}
               />
             )}
             {slide.type === "table" && slide.tableData && (
@@ -224,7 +242,7 @@ const Main: React.FC<Metadata> = (meta) => {
                 badge={slide.heroBadge}
                 prefix={slide.heroPrefix}
                 suffix={slide.heroSuffix}
-                accentColor={slide.heroAccentColor}
+                accentColor={slide.heroAccentColor ?? slide.accentColor}
                 fontScale={fontScale}
               />
             )}
