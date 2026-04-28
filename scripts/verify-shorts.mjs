@@ -78,7 +78,7 @@ async function probeMeta(path) {
  * Detect scene changes via ffmpeg's scene filter. Returns timestamps (in
  * seconds) where a scene change exceeds the threshold.
  */
-async function detectScenes(path, threshold = 0.3) {
+async function detectScenes(path, threshold = 0.1) {
   const { stderr } = await runArgv("ffmpeg", [
     "-i",
     path,
