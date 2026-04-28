@@ -79,17 +79,22 @@ cp .env.example .env   # 填 FISH_AUDIO_API_KEY, FISH_AUDIO_VOICE_ID
 
 就这些。不用视频剪辑软件，不用录音设备，不用时间轴思维。
 
-## 三种 slide 类型
+## Slide 类型
 
 | 类型 | 用途 | 必填字段 | 可选字段 |
 |------|------|---------|---------|
 | `cover` | 封面 / 结束卡 | `title` | `subtitle` |
-| `text` | 文字 + 旁白 | `text`, `voice_text` | `voice` |
+| `text` | 文字 + 旁白 | `text`, `voice_text` | `voice`、`textMode`（`"hero"` 大字钩子）、`textReveal`（`"spring"` \| `"typewriter"`）、`accentColor` |
 | `code` | 代码展示 + 旁白 | `code`, `language`, `voice_text` | `voice` |
+| `numberHero` | 大数字数据钩子（短视频） | `heroValue` | `heroLabel`、`heroBadge`、`heroPrefix`、`heroSuffix`、`heroAccentColor` |
 
 **`voice_text`** 是旁白文案 — 和屏幕上的 `text` 字段分开，这样旁白可以比屏幕显示的更自然口语化。**`voice`** 是这一条 slide 单独覆盖的 Fish Audio 声音 ID（不写就用全局默认的）。
 
 不够用？在 `remotion/src/compositions/` 扔一个新组件，在 `Root.tsx` 注册一下就能用。详见 `docs/quickstart.md`。
+
+## 短视频管线（竖屏 9:16）
+
+Phase 1 加了竖屏短视频管线：1080×1920 画布，密集运动，大字 — 为 YouTube Shorts / 抖音 / TikTok / 小红书 / B 站 Shorts 而生。metadata 里写 `"preset": "shorts"` 一键切换画布 + 字号；正常渲染后跑 `node scripts/verify-shorts.mjs <out.mp4>` 客观验收（4 道硬卡：画布、≤60s、节奏、首 2s 钩子）。slide 类型 schema、字幕配置、节奏指南详见 [`docs/SHORTS_PIPELINE.md`](docs/SHORTS_PIPELINE.md)。
 
 ## 仓库里的两个示例
 

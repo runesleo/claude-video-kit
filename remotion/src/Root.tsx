@@ -13,7 +13,10 @@ import { ContentSlide } from "./compositions/ContentSlide";
 import { TableSlide, TableCell } from "./compositions/TableSlide";
 import { FormulaSlide, FormulaGroup } from "./compositions/FormulaSlide";
 import { TransitionSlide } from "./compositions/TransitionSlide";
+import { NumberHero } from "./compositions/NumberHero";
+import { CaptionsLayer, CaptionPosition } from "./compositions/CaptionsLayer";
 import { BrandConfig } from "./compositions/BrandedSlideLayout";
+import { Preset, resolvePreset } from "./presets";
 
 /**
  * Metadata is produced by scripts/build-metadata.mjs after TTS + Whisper.
@@ -38,7 +41,8 @@ type SlideMeta = {
     | "content"
     | "table"
     | "formula"
-    | "transition";
+    | "transition"
+    | "numberHero";
   durationInFrames: number;
   audio?: string;
   captions?: Array<{ from: number; to: number; text: string }>;
@@ -51,6 +55,12 @@ type SlideMeta = {
 
   // text
   text?: string;
+  /** TextSlide mode: "default" balanced, "hero" big-font hook moment. */
+  textMode?: "default" | "hero";
+  /** TextSlide hero reveal style: "spring" or "typewriter". */
+  textReveal?: "spring" | "typewriter";
+  /** Accent color for TextSlide hero glow / NumberHero. */
+  accentColor?: string;
 
   // code
   language?: string;
@@ -74,6 +84,19 @@ type SlideMeta = {
   formulaGroups?: FormulaGroup[];
   formulaCaption?: string;
   formulaPrefix?: string;
+
+  // numberHero (shorts data-hook slide)
+  heroValue?: string | number;
+  heroLabel?: string;
+  heroBadge?: string;
+  heroPrefix?: string;
+  heroSuffix?: string;
+  heroAccentColor?: string;
+
+  // captions overlay (rendered by CaptionsLayer at slide level, all types)
+  captionHighlight?: string[];
+  captionPosition?: CaptionPosition;
+  captionMaxCharsPerLine?: number;
 };
 
 type Metadata = {
@@ -84,6 +107,12 @@ type Metadata = {
   slides: SlideMeta[];
   /** Brand watermark config applied to all branded slide types */
   brand?: BrandConfig;
+  /**
+   * Optional video format preset. When set, overrides width/height/fps with
+   * the preset's canvas; components scale fonts via the preset's fontScale.
+   * Without preset, metadata's own width/height/fps are used (legacy mode).
+   */
+  preset?: Preset;
 };
 
 const DEFAULT_METADATA: Metadata = {
@@ -114,6 +143,14 @@ const DEFAULT_METADATA: Metadata = {
 
 const Main: React.FC<Metadata> = (meta) => {
   const total = meta.slides.length;
+  const presetCfg = meta.preset
+    ? resolvePreset(meta.preset, {
+        width: meta.width,
+        height: meta.height,
+        fps: meta.fps,
+      }).config
+    : undefined;
+  const fontScale = presetCfg?.fontScale ?? 1;
   let offset = 0;
 
   return (
@@ -132,10 +169,21 @@ const Main: React.FC<Metadata> = (meta) => {
             {slide.audio ? <Audio src={staticFile(slide.audio)} /> : null}
 
             {slide.type === "cover" && (
-              <CoverSlide title={slide.title ?? ""} subtitle={slide.subtitle} />
+              <CoverSlide
+                title={slide.title ?? ""}
+                subtitle={slide.subtitle}
+                fontScale={fontScale}
+              />
             )}
             {slide.type === "text" && (
-              <TextSlide text={slide.text ?? ""} captions={slide.captions} />
+              <TextSlide
+                text={slide.text ?? ""}
+                captions={slide.captions}
+                mode={slide.textMode}
+                reveal={slide.textReveal}
+                accentColor={slide.accentColor}
+                fontScale={fontScale}
+              />
             )}
             {slide.type === "code" && (
               <CodeSlide
@@ -155,6 +203,7 @@ const Main: React.FC<Metadata> = (meta) => {
                 body={slide.body}
                 badge={slide.badge}
                 badgeGradient={slide.badgeGradient}
+                fontScale={fontScale}
               />
             )}
             {slide.type === "table" && slide.tableData && (
@@ -192,6 +241,27 @@ const Main: React.FC<Metadata> = (meta) => {
                 bullets={slide.bullets}
               />
             )}
+            {slide.type === "numberHero" && slide.heroValue !== undefined && (
+              <NumberHero
+                value={slide.heroValue}
+                label={slide.heroLabel ?? ""}
+                badge={slide.heroBadge}
+                prefix={slide.heroPrefix}
+                suffix={slide.heroSuffix}
+                accentColor={slide.heroAccentColor ?? slide.accentColor}
+                fontScale={fontScale}
+              />
+            )}
+
+            {/* Captions overlay — rendered above all slide types when present */}
+            <CaptionsLayer
+              captions={slide.captions}
+              fontScale={fontScale}
+              position={slide.captionPosition}
+              highlight={slide.captionHighlight}
+              accentColor={slide.accentColor}
+              maxCharsPerLine={slide.captionMaxCharsPerLine}
+            />
           </Sequence>
         );
       })}
@@ -214,11 +284,18 @@ export const Root: React.FC = () => {
       defaultProps={DEFAULT_METADATA}
       calculateMetadata={({ props }) => {
         const meta: Metadata = props.slides ? props : DEFAULT_METADATA;
-        return {
-          durationInFrames: calcDuration(meta),
-          fps: meta.fps,
+        // Resolve preset → effective canvas. Without preset, use metadata's
+        // own width/height/fps so legacy horizontal examples keep working.
+        const resolved = resolvePreset(meta.preset, {
           width: meta.width,
           height: meta.height,
+          fps: meta.fps,
+        });
+        return {
+          durationInFrames: calcDuration(meta),
+          fps: resolved.fps,
+          width: resolved.width,
+          height: resolved.height,
           props: meta,
         };
       }}
