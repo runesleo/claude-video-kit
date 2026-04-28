@@ -31,13 +31,21 @@ interface CaptionsLayerProps {
  * Latin words are kept atomic (not broken mid-word).
  */
 function wrapText(text: string, maxChars: number): string[] {
+  const tokens = text.match(/[一-龥　-〿＀-￯]|[A-Za-z0-9]+|[^\s]/g) ?? [];
+  const totalLen = tokens.reduce((s, t) => s + t.length, 0);
+
+  // Short caption → single line, no forced split
+  if (totalLen <= maxChars + 2) return [text];
+
+  // Cap at 3 lines hard. targetPerLine = totalLen/3 guarantees fit
+  // even when individual tokens (e.g. "DeepSeek") exceed maxChars.
+  const targetLines = Math.min(3, Math.ceil(totalLen / maxChars));
+  const targetPerLine = Math.ceil(totalLen / targetLines) + 2;
+
   const lines: string[] = [];
   let current = "";
-  // Tokenize: CJK runs as individual chars, Latin words as atomic.
-  const tokens = text.match(/[一-龥　-〿＀-￯]|[A-Za-z0-9]+|[^\s]/g) ?? [];
-
   for (const tok of tokens) {
-    if (current.length + tok.length > maxChars && current.length > 0) {
+    if (current.length + tok.length > targetPerLine && current.length > 0) {
       lines.push(current);
       current = tok;
     } else {
@@ -45,6 +53,11 @@ function wrapText(text: string, maxChars: number): string[] {
     }
   }
   if (current.length > 0) lines.push(current);
+  // Hard cap: merge any 4th+ line back into line 3
+  while (lines.length > 3) {
+    const tail = lines.pop()!;
+    lines[lines.length - 1] += tail;
+  }
   return lines;
 }
 
@@ -109,13 +122,14 @@ export const CaptionsLayer: React.FC<CaptionsLayerProps> = ({
   if (!active) return null;
 
   const lines = wrapText(active.text, maxCharsPerLine);
-  const captionFont = 56 * fontScale;
+  const captionFont = 38 * fontScale;
 
   // Spring entrance per-caption: starts at this caption's `from` frame.
+  // Bouncy pop-in: scale 0.5 → 1 with overshoot for "蹦" feel.
   const captionSpring = spring({
     frame: frame - active.from,
     fps,
-    config: { damping: 16, stiffness: 140, mass: 0.5 },
+    config: { damping: 8, stiffness: 180, mass: 0.4 },
   });
 
   // Vertical position mapping.
@@ -146,8 +160,8 @@ export const CaptionsLayer: React.FC<CaptionsLayerProps> = ({
         left: 60,
         right: 60,
         textAlign: "center",
-        opacity: captionSpring,
-        transform: `${positionStyle.transform ?? ""} translateY(${interpolate(captionSpring, [0, 1], [16, 0])}px)`,
+        opacity: Math.min(1, captionSpring * 1.5),
+        transform: `${positionStyle.transform ?? ""} scale(${interpolate(captionSpring, [0, 1], [0.55, 1])}) translateY(${interpolate(captionSpring, [0, 1], [50, 0])}px)`,
         ...positionStyle,
         zIndex: 10,
         pointerEvents: "none",
@@ -162,8 +176,7 @@ export const CaptionsLayer: React.FC<CaptionsLayerProps> = ({
             color: "#fff",
             lineHeight: 1.25,
             textShadow: outlineShadow,
-            fontFamily:
-              "-apple-system, 'PingFang SC', 'Hiragino Sans', 'Microsoft YaHei', Inter, sans-serif",
+            fontFamily: "STHeiti, 'PingFang SC', -apple-system, sans-serif",
             letterSpacing: "0.02em",
           }}
         >

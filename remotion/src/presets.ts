@@ -36,7 +36,7 @@ export const PRESET_CONFIG: Record<Preset, PresetConfig> = {
     width: 1080,
     height: 1920,
     fps: 30,
-    fontScale: 1.6,
+    fontScale: 1.3,
     motionIntensity: "high",
     defaultDurationFrames: 60,
     maxDurationSeconds: 60,

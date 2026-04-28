@@ -53,6 +53,15 @@ type SlideMeta = {
   title?: string;
   subtitle?: string;
 
+  // cover
+  eyebrow?: string;
+  endCard?: boolean;
+  endCardCTAs?: { label: string; value: string }[];
+  showWatermark?: boolean;
+  watermarkHandle?: string;
+  watermarkUrl?: string;
+  logoSrc?: string;
+
   // text
   text?: string;
   /** TextSlide mode: "default" balanced, "hero" big-font hook moment. */
@@ -173,6 +182,14 @@ const Main: React.FC<Metadata> = (meta) => {
                 title={slide.title ?? ""}
                 subtitle={slide.subtitle}
                 fontScale={fontScale}
+                eyebrow={slide.eyebrow}
+                accentColor={slide.accentColor ?? meta.brand?.accentColor}
+                showWatermark={slide.showWatermark ?? true}
+                watermarkHandle={slide.watermarkHandle ?? meta.brand?.handle}
+                watermarkUrl={slide.watermarkUrl ?? meta.brand?.url}
+                logoSrc={slide.logoSrc ?? meta.brand?.logoSrc}
+                endCard={slide.endCard}
+                endCardCTAs={slide.endCardCTAs}
               />
             )}
             {slide.type === "text" && (

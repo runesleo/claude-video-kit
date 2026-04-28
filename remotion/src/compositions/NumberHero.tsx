@@ -52,7 +52,7 @@ export const NumberHero: React.FC<NumberHeroProps> = ({
   label,
   badge,
   accentColor = "#f59e0b",
-  baseFontSize = 240,
+  baseFontSize = 180,
   fontScale = 1,
   countUpStartFrame = 8,
   countUpDurationFrames = 30,

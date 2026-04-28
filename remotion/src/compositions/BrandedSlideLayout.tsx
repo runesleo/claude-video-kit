@@ -6,6 +6,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import { LEO_LOGO_DATA_URL } from "./leoLogoData";
 
 export interface BrandConfig {
   /** URL or staticFile() path to a logo image, ~64px square */
@@ -166,7 +167,12 @@ export const BrandedSlideLayout: React.FC<BrandedSlideLayoutProps> = ({
         >
           {brand.logoSrc && (
             <Img
-              src={brand.logoSrc}
+              src={
+                brand.logoSrc.startsWith("data:") ||
+                brand.logoSrc.startsWith("http")
+                  ? brand.logoSrc
+                  : LEO_LOGO_DATA_URL
+              }
               style={{
                 width: 56,
                 height: 56,

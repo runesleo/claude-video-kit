@@ -15,3 +15,9 @@ __pycache__/
 examples/*/metadata.json
 examples/*/workspace/
 !examples/schoger-demo/script.json
+
+# Pipeline artifacts (generated, do not commit)
+workspace/
+remotion/public/*.wav
+remotion/public/*.png
+remotion/public/captions.json
