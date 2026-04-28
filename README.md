@@ -82,12 +82,17 @@ That's it. No video editor, no recording gear, no timeline.
 | Type | Purpose | Required fields | Optional fields |
 |------|---------|----------------|----------------|
 | `cover` | Opening / closing cards | `title` | `subtitle` |
-| `text` | Narrated text slide | `text`, `voice_text` | `voice` |
+| `text` | Narrated text slide | `text`, `voice_text` | `voice`, `textMode` (`"hero"` for big-font shorts hook), `textReveal` (`"spring"` \| `"typewriter"`), `accentColor` |
 | `code` | Code-as-video blocks | `code`, `language`, `voice_text` | `voice` |
+| `numberHero` | Big-number data hook (shorts) | `heroValue` | `heroLabel`, `heroBadge`, `heroPrefix`, `heroSuffix`, `heroAccentColor` |
 
 **`voice_text`** is the narration script — kept separate from on-screen `text` so your voice-over can be more natural than what the slide shows. **`voice`** overrides the default Fish Audio voice ID for that slide.
 
 Add your own slide type by dropping a new composition into `remotion/src/compositions/` and registering it in `Root.tsx`. See `docs/quickstart.md`.
+
+## Shorts pipeline (vertical 9:16)
+
+Phase 1 adds a vertical short-video pipeline: 1080×1920 canvas, dense motion, big text — built for YouTube Shorts / 抖音 / TikTok / 小红书 / B 站 Shorts. Set `"preset": "shorts"` in metadata to flip canvas + font scale in one place; render normally, then run `node scripts/verify-shorts.mjs <out.mp4>` for an objective 4-gate acceptance check (canvas, ≤60s, scene rhythm, hook entrance). See [`docs/SHORTS_PIPELINE.md`](docs/SHORTS_PIPELINE.md) for slide-type schema, captions config, and rhythm guidance.
 
 ## Examples in this repo
 
