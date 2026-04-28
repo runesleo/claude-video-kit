@@ -1,0 +1,116 @@
+{
+  "title": "AI 简历偏见三个真相 (shorts)",
+  "preset": "shorts",
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "brand": {
+    "handle": "@runes_leo",
+    "url": "leolabs.me",
+    "logoSrc": "leo-labs-logo.jpeg",
+    "accentColor": "#f59e0b"
+  },
+  "_note": "口播文稿连贯版 — 视频是一段完整人话不是独立卡片标题",
+  "slides": [
+    {
+      "type": "cover",
+      "title": "AI 帮你改简历\n真有用吗？",
+      "subtitle": "三个反常识结论",
+      "eyebrow": "AAAI 2025 论文解读",
+      "accentColor": "#f59e0b",
+      "voice_text": "AI 帮你改简历，真的有用吗？",
+      "caption_text": "AI 帮你改简历，真的有用吗？"
+    },
+    {
+      "type": "numberHero",
+      "heroValue": "70%",
+      "heroLabel": "公司用 AI 筛简历",
+      "heroBadge": "现状",
+      "heroAccentColor": "#f59e0b",
+      "voice_text": "七成公司在用 AI 筛简历，但 AI 偏的方向，你绝对想不到。",
+      "caption_text": "70% 公司用 AI 筛简历，但 AI 偏的方向你绝对想不到"
+    },
+    {
+      "type": "text",
+      "textMode": "hero",
+      "textReveal": "spring",
+      "text": "马里兰 + 俄亥俄州立\nAAAI 2025",
+      "accentColor": "#a78bfa",
+      "voice_text": "马里兰大学和俄亥俄州立大学最新发在 AAAI 2025 的论文，",
+      "caption_text": "马里兰 + 俄亥俄州立 · AAAI 2025"
+    },
+    {
+      "type": "numberHero",
+      "heroValue": "2245",
+      "heroLabel": "份真实简历 × 9 个主流模型",
+      "heroBadge": "样本",
+      "heroAccentColor": "#a78bfa",
+      "voice_text": "跑了 2245 份真简历、9 个主流模型，结果有三个反常识。",
+      "caption_text": "2245 份真简历 × 9 个主流模型，三个反常识"
+    },
+    {
+      "type": "numberHero",
+      "heroValue": "67-82%",
+      "heroLabel": "AI 偏好 AI 改写过的简历",
+      "heroBadge": "真相一",
+      "heroAccentColor": "#10b981",
+      "voice_text": "第一，AI 确实偏向 AI 改写过的简历，概率在 67% 到 82% 之间。",
+      "caption_text": "第一: AI 偏向 AI 改写过的简历，概率 67% 到 82%"
+    },
+    {
+      "type": "numberHero",
+      "heroValue": "39%",
+      "heroLabel": "GPT-4o 偏 DeepSeek 多于偏自己",
+      "heroBadge": "真相二",
+      "heroAccentColor": "#3b82f6",
+      "voice_text": "第二，AI 之间也有等级——GPT-4o 偏 DeepSeek 改的简历，比偏自己改的还多。",
+      "caption_text": "第二: AI 之间有等级 · GPT-4o 偏 DeepSeek 多于偏自己"
+    },
+    {
+      "type": "numberHero",
+      "heroValue": "60%",
+      "heroLabel": "销售/会计/金融岗 入围率提升",
+      "heroBadge": "真相三",
+      "heroAccentColor": "#ec4899",
+      "voice_text": "第三，行业差距巨大。销售、会计、金融岗，AI 改写后入围率涨 60%；",
+      "caption_text": "第三: 行业差距巨大 · 金融销售会计岗 +60% 入围率"
+    },
+    {
+      "type": "text",
+      "textMode": "hero",
+      "textReveal": "spring",
+      "text": "汽车与农业\n几乎无差异",
+      "accentColor": "#9ca3af",
+      "voice_text": "但汽车和农业，几乎没差别。",
+      "caption_text": "但汽车和农业，几乎没差别"
+    },
+    {
+      "type": "content",
+      "title": "怎么用",
+      "bullets": [
+        "用主流 AI 改一遍",
+        "金融/销售/会计 重点",
+        "再试几款不同模型"
+      ],
+      "badge": "Tip",
+      "badgeGradient": ["#f59e0b", "#d97706"],
+      "voice_text": "所以怎么用？用主流 AI 改一遍，金融销售会计岗重点，再多试几款模型对比。",
+      "caption_text": "AI 改一遍 · 金融销售会计岗重点 · 多试几款模型"
+    },
+    {
+      "type": "cover",
+      "title": "Leo Labs",
+      "subtitle": "AI × Crypto · 实战派",
+      "eyebrow": "下次见",
+      "endCard": true,
+      "accentColor": "#f59e0b",
+      "endCardCTAs": [
+        { "label": "X", "value": "@runes_leo" },
+        { "label": "WEB", "value": "leolabs.me" },
+        { "label": "TG", "value": "@runesgangalpha" }
+      ],
+      "voice_text": "我是 Leo，专注 AI 和加密领域的实战分享，下次见。",
+      "caption_text": "我是 Leo，专注 AI 和加密领域的实战分享，下次见"
+    }
+  ]
+}

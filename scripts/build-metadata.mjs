@@ -81,6 +81,8 @@ function main() {
     width: script.width ?? 1080,
     height: script.height ?? 1920,
     fps,
+    ...(script.preset ? { preset: script.preset } : {}),
+    ...(script.brand ? { brand: script.brand } : {}),
     slides,
   };
 
