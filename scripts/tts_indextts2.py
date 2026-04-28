@@ -135,6 +135,10 @@ def main() -> int:
             continue
 
         out = workspace / f"{i:02d}.wav"
+        if out.exists() and out.stat().st_size > 1024:
+            print(f"[{i}/{total}] {out.name}: already exists, skip", flush=True)
+            success += 1
+            continue
         print(f"[{i}/{total}] {out.name}: {text[:50]}...", flush=True)
 
         t1 = time.time()

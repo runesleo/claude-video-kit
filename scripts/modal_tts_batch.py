@@ -1,15 +1,19 @@
 """Modal serverless batch TTS with IndexTTS2 on A10G GPU.
 
-Same pipeline as the PnL v7 video — pinned IndexTTS2 commit 830f6f8 + fp16 +
-CUDA + kwargs API, which produces materially better voice than the local Mac
-MPS fp32 path.
+Pinned IndexTTS2 commit 830f6f8 + fp16 + CUDA + kwargs API, which produces
+materially better voice than the local Mac MPS fp32 path.
+
+Setup:
+  - Set the VOICE_REF env var to your IndexTTS2 voice reference wav path.
+  - Populate the Modal volume 'indextts2-ckpt' with IndexTTS2 weights (one-time).
 
 Run from laptop:
-  modal run scripts/modal_tts_batch.py --project examples/<project>
+  VOICE_REF=~/path/to/voice-ref.wav modal run scripts/modal_tts_batch.py \\
+      --project examples/<project>
 
 Reads <project>/script.json, writes <project>/workspace/<NN>.wav.
-Requires Modal volume 'indextts2-ckpt' (already populated 2026-04-22).
 """
+import os
 import modal
 from pathlib import Path
 import json
@@ -97,7 +101,13 @@ def main(project: str = "examples/ai-resume-bias-truth-shorts"):
     WORKSPACE = PROJECT / "workspace"
     WORKSPACE.mkdir(exist_ok=True)
     SCRIPT = PROJECT / "script.json"
-    VOICE_REF = Path.home() / "Projects/content/voice-clone/leo_indextts_ref.wav"
+    voice_ref_env = os.environ.get("VOICE_REF", "").strip()
+    if not voice_ref_env:
+        raise SystemExit(
+            "VOICE_REF env var not set. Point it at your IndexTTS2 voice reference wav, "
+            "e.g. VOICE_REF=~/voice-clone-ref.wav"
+        )
+    VOICE_REF = Path(voice_ref_env).expanduser().resolve()
 
     if not SCRIPT.exists():
         raise SystemExit(f"missing {SCRIPT}")
