@@ -71,15 +71,16 @@ videos (≤60s, big text, dense motion) for YouTube Shorts / 抖音 / TikTok /
 
 ## Step 2 · TTS（Modal A10G）
 
-**Backend**: Modal serverless A10G fp16 + IndexTTS2 commit `830f6f8`（PnL v7 同管线）。
+**Backend**: Modal serverless A10G fp16 + IndexTTS2 commit `830f6f8`（pinned）。
 
 **禁止**: 本地 Mac MPS fp32（音质差、读字母错、语速不稳）。
 
-**Voice ref**: `~/Projects/content/voice-clone/leo_indextts_ref.wav`（Leo cloned voice）
+**Voice ref**: 通过 `VOICE_REF` 环境变量指向你的 IndexTTS2 cloned voice wav 文件。**永远不要把声纹 wav commit 进 repo** —— 声纹是生物识别信息，git 历史保留即等于公开声纹。
 
 **入口**:
 ```bash
-cd ~/Projects/claude-video-kit
+cd <repo-root>
+export VOICE_REF=~/your-voice-ref.wav
 modal run scripts/modal_tts_batch.py --project examples/<name>
 ```
 
@@ -204,7 +205,7 @@ preset: "long"    →  1920×1080 / 30fps / fontScale=0.9 / max 7200s（Phase 3 
 **坑**：Remotion `<Img src={staticFile("xxx.jpeg")}>` 在 4.0.444 上常报 `EncodingError`。即便文件正常 JPEG。
 
 **解法**：base64 inline data URL。
-- 数据：`remotion/src/compositions/leoLogoData.ts`（base64 from PnL v7 working 245KB JPEG，md5 `9ff2eb9c5226d234ae6c5aac19e6dda4`）
+- 数据：`remotion/src/compositions/leoLogoData.ts`（base64 from a working 245KB JPEG，md5 `9ff2eb9c5226d234ae6c5aac19e6dda4`）
 - 调用：`<Img src={LEO_LOGO_DATA_URL}>`
 - BrandedSlideLayout 兼容：传入的 `brand.logoSrc` 若为 raw filename，自动 fallback 到 inline data URL
 
@@ -382,3 +383,32 @@ Shorts viral norm：
 - Font-height-ratio OCR check (verify-shorts soft gate phase 2)
 - BGM 自动选配（当前手动 / 留空）
 - 字幕语速漂移补偿（IndexTTS2 不同 slide 语速 3.2-5.6 char/s 差异，目前接受）
+
+---
+
+## Roadmap · 视觉模式扩展（v0.2 候选）
+
+当前 shorts 的视觉是「大字标题 + NumberHero + Caption」三件套，简洁但单调。下一轮吸收 X 上几个横屏教学视频的细节装饰模式（典型如 yuanhao 的 yoyo agent 系列），让单条 shorts 的信息密度和视觉节奏更丰富。**只吸收视觉模式，不吸收吉祥物 IP**（IP 资产跟「真人独立构建者」人设冲突）。
+
+### 候选 slide types（按工程难度排）
+
+| 优先级 | 新 slide type | 视觉模式 | 适合内容 |
+|-------|--------------|---------|---------|
+| P0 | `EyebrowAnchor` | 标题上方加双语小标签锚点（`TODAY'S LESSON` / `THE SHIFT · 转变` / `UNLOCKED · 解锁`），mono caps + 浅色 letter-spacing | 章节切换、阶段性结论 |
+| P0 | `DualKeyword` | 单句内同时高亮两个关键词（紫 + 橙双色），扩展现有单色 keyword 高亮 | 反差陈述、对比金句 |
+| P1 | `EmojiCard` | emoji icon + 大数字 + 单位（如 📖 + "1,200 页"）边框装饰卡 | 数据点可视化、量级冲击 |
+| P1 | `ComparisonCard` | 双卡片左右并列（`CLASSIC AGENTS` vs `NEW WAY`），各带 eyebrow + 主标题 + 注释 | 反常识结论、新旧对比 |
+| P2 | `QuoteBlock` | 引用块带 attribution（`— 用户名 · DAY N`），左侧大字号引文 + 右下来源 | 用户反馈、踩坑日记、自我引用 |
+
+### 不做
+
+- 角落角色头像 + SPEAKING 状态条 — 需先建吉祥物 IP，跟真人人设冲突
+- 吉祥物 IP 全片贯穿 — 同上
+- 横屏 1920×1080 长视频 preset — Phase 3 stub，不在 v0.2 范围
+
+### 验收标准（v0.2 ready）
+
+- 5 个新 slide types 至少落地 3 个（P0 必须，P1 至少 1 个）
+- 每个新 type 在 `examples/` 至少有 1 个 demo slide
+- `verify-shorts.mjs` 增加新 type 对应的视觉断言（字号 / 占屏比 / 高亮色检查）
+- README 更新 "Supported slide types" 列表
