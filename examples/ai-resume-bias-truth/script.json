@@ -1,0 +1,93 @@
+{
+  "title": "70% 大公司用 AI 筛简历——AI 真的偏向自己人吗",
+  "width": 1920,
+  "height": 1080,
+  "fps": 30,
+  "brand": {
+    "watermark": "@runes_leo · Leo Labs",
+    "accentColor": "#4fae50"
+  },
+  "slides": [
+    {
+      "type": "cover",
+      "title": "AI 筛简历的真相",
+      "subtitle": "70% 大公司在用 · 但偏好不是你想的那样",
+      "voice_text": "现在 7 成大公司用 AI 读你的简历。但 AI 不是你想的那样偏。"
+    },
+    {
+      "type": "content",
+      "title": "实测一篇论文",
+      "badge": "arxiv 2509.00462",
+      "badgeGradient": ["#4fae50", "#1060b0"],
+      "bullets": [
+        "马里兰大学 + 俄亥俄州立大学合作研究",
+        "2245 份真实简历样本",
+        "9 个主流大模型实测",
+        "AAAI 2025 会议已发表"
+      ],
+      "voice_text": "马里兰大学和俄亥俄州立大学的一篇论文，跑了 2245 份真简历，9 个主流模型，AAAI 2025 已发表。"
+    },
+    {
+      "type": "table",
+      "title": "真相 1:AI 偏好 AI 写的简历——但没那么夸张",
+      "tableData": {
+        "headers": ["来源", "自偏好率", "结论"],
+        "rows": [
+          ["X 上 22k 赞推文", { "text": "95-97%", "color": "red" }, "夸大恐惧版"],
+          ["论文实测", { "text": "67-82%", "color": "green" }, "真实区间"]
+        ],
+        "footer": "差了 15 到 30 个百分点",
+        "animateNumbers": true
+      },
+      "voice_text": "真相一,AI 确实偏好 AI 写的简历。67% 到 82% 的概率会选 AI 改写的版本。不是 95% 到 97% 那么夸张。"
+    },
+    {
+      "type": "table",
+      "title": "真相 2:AI 之间有等级偏好",
+      "tableData": {
+        "headers": ["模型", "偏好对象", "幅度"],
+        "rows": [
+          ["GPT-4o", "DeepSeek 输出", { "text": "+39%", "color": "orange" }],
+          ["DeepSeek", "自己输出 vs LLaMA", { "text": "+69%", "color": "red" }],
+          ["LLaMA", "几乎不偏", { "text": "1.6-6.7%", "color": "green" }]
+        ],
+        "footer": "AI 都偏好自己——是被简化的故事",
+        "animateNumbers": true
+      },
+      "voice_text": "真相二,AI 之间有等级偏好。GPT-4o 居然偏好 DeepSeek 39% 多于自己。DeepSeek 偏好自己 69% 多于 LLaMA。LLaMA 几乎不偏。所以 AI 都偏好自己,是被简化的故事。"
+    },
+    {
+      "type": "table",
+      "title": "真相 3:行业差异巨大",
+      "tableData": {
+        "headers": ["行业类别", "用同款 AI 的入围加成"],
+        "rows": [
+          ["销售 / 会计 / 金融", { "text": "+23-60%", "color": "red" }],
+          ["行政 / 客服", { "text": "+15-30%", "color": "orange" }],
+          ["汽车 / 农业 / 制造", { "text": "≈0%", "color": "green" }]
+        ],
+        "footer": "白领文职岗位差异最大,蓝领基本无影响",
+        "animateNumbers": false
+      },
+      "voice_text": "真相三,行业差异巨大。销售、会计、金融类岗位,候选人用同款 AI 入围率高 23 到 60%。汽车和农业类几乎无差异。"
+    },
+    {
+      "type": "content",
+      "title": "3 条求职简历建议",
+      "badge": "Action",
+      "badgeGradient": ["#ee943e", "#dc2626"],
+      "bullets": [
+        "用 AI 改一遍简历是有效的——AI 偏好 AI 语言是真的",
+        "销售 / 会计 / 金融类岗位值得专门用主流 AI 改;汽车 / 农业类不必折腾",
+        "别盲信简化结论——每个 AI 偏好自己 的故事是错的"
+      ],
+      "voice_text": "三条建议。第一,用 AI 改一遍简历是有效的,AI 偏好 AI 语言是真的。第二,销售、会计、金融岗位值得专门用主流 AI 改简历,汽车和农业类不必折腾。第三,别盲信简化结论,每个 AI 偏好自己,是错的。"
+    },
+    {
+      "type": "cover",
+      "title": "Leo Labs",
+      "subtitle": "@runes_leo · AI 实战派",
+      "voice_text": "Leo Labs,AI 实战派,欢迎关注。"
+    }
+  ]
+}
