@@ -43,13 +43,14 @@ export const TextSlide: React.FC<TextSlideProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
-  const active = captions?.find((c) => frame >= c.from && frame < c.to);
+  // Captions are rendered globally by CaptionsLayer at the Root level for
+  // consistent styling across all slide types; no per-slide caption render here.
+  void captions;
 
   const isHero = mode === "hero";
   // Default base font: 72 (legacy). Hero amplifies via fontScale × 1.5.
   const baseFont = isHero ? 96 : 72;
   const textFont = baseFont * fontScale;
-  const captionFont = 48 * fontScale;
 
   // KenBurns: subtle 1.0 → 1.04 zoom across the slide for "alive" feel.
   const kenBurnsScale = interpolate(frame, [0, durationInFrames], [1.0, 1.04], {
@@ -118,26 +119,6 @@ export const TextSlide: React.FC<TextSlideProps> = ({
       >
         {displayedText}
       </div>
-
-      {active && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: 200,
-            left: 80,
-            right: 80,
-            textAlign: "center",
-            fontSize: captionFont,
-            fontWeight: 500,
-            color: "#fff",
-            background: "rgba(0,0,0,0.6)",
-            padding: "20px 32px",
-            borderRadius: 12,
-          }}
-        >
-          {active.text}
-        </div>
-      )}
     </AbsoluteFill>
   );
 };

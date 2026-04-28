@@ -14,6 +14,7 @@ import { TableSlide, TableCell } from "./compositions/TableSlide";
 import { FormulaSlide, FormulaGroup } from "./compositions/FormulaSlide";
 import { TransitionSlide } from "./compositions/TransitionSlide";
 import { NumberHero } from "./compositions/NumberHero";
+import { CaptionsLayer, CaptionPosition } from "./compositions/CaptionsLayer";
 import { BrandConfig } from "./compositions/BrandedSlideLayout";
 import { Preset, resolvePreset } from "./presets";
 
@@ -91,6 +92,11 @@ type SlideMeta = {
   heroPrefix?: string;
   heroSuffix?: string;
   heroAccentColor?: string;
+
+  // captions overlay (rendered by CaptionsLayer at slide level, all types)
+  captionHighlight?: string[];
+  captionPosition?: CaptionPosition;
+  captionMaxCharsPerLine?: number;
 };
 
 type Metadata = {
@@ -246,6 +252,16 @@ const Main: React.FC<Metadata> = (meta) => {
                 fontScale={fontScale}
               />
             )}
+
+            {/* Captions overlay — rendered above all slide types when present */}
+            <CaptionsLayer
+              captions={slide.captions}
+              fontScale={fontScale}
+              position={slide.captionPosition}
+              highlight={slide.captionHighlight}
+              accentColor={slide.accentColor}
+              maxCharsPerLine={slide.captionMaxCharsPerLine}
+            />
           </Sequence>
         );
       })}
