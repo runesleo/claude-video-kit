@@ -4,8 +4,11 @@
 > Last updated: 2026-04-28（Phase 1 + Phase 1.5 验收 by Leo · ai-resume-bias-truth-shorts 作为参考样例）
 
 Phase 1 of claude-video-kit's video format routing: vertical 9:16 short
-videos (≤60s, big text, dense motion) for YouTube Shorts / 抖音 / TikTok /
-小红书 / B 站 Shorts.
+videos (≤60s, big text, dense motion) for 抖音 / TikTok / 小红书 / B 站 Shorts.
+
+YouTube Shorts is **out of this delivery pack**. New flow: video first ships
+to X (Leo manual), then Claude re-publishes the local mp4 to YouTube via
+`~/.config/youtube/upload.py` with title/description authored at upload time.
 
 ---
 
@@ -18,7 +21,7 @@ videos (≤60s, big text, dense motion) for YouTube Shorts / 抖音 / TikTok /
 4. align.py         →  workspace/captions.json (按 voice_text 一字不差对齐)
 5. render + mux     →  remotion render + ffmpeg +faststart
 6. 分发包 + 网盘     →  ⚠️ 定稿后强制流程，禁跳
-                        ① 4 平台 metadata 全部按定稿文稿同步刷新
+                        ① 3 平台 metadata 全部按定稿文稿同步刷新（B站/抖音/小红书；YouTube 走 X→upload.py 链路另发）
                         ② cover.png 重抓（frame ≥1.0s）
                         ③ subtitles-zh.srt 从最新 captions.json 重生
                         ④ 整个 distribute/ 文件夹形式上传百度网盘（禁打包 zip）
@@ -275,19 +278,20 @@ preset: "long"    →  1920×1080 / 30fps / fontScale=0.9 / max 7200s（Phase 3 
 
 视频本体定稿（Leo 验收 OK）后**必须立即做**这一步，禁拖延、禁跳：
 
-### 6.1 同步 4 平台 metadata
+### 6.1 同步 3 平台 metadata
 
-每个平台在 `distribute/<platform>/` 下有：title / description-or-正文 / tags。**最终视频文稿改了任何措辞，所有 4 个平台的 description 必须同步更新**。
+每个平台在 `distribute/<platform>/` 下有：title / description-or-正文 / tags。**最终视频文稿改了任何措辞，所有 3 个平台的 description 必须同步更新**。
+
+> YouTube 不在交付包内。视频在 X 定稿后，Claude 用 `~/.config/youtube/upload.py` 直发，title / description 在上传命令里手写。
 
 红线：
 - ❌ 平台 description 引用了视频删掉的钩子（如 "95%" strawman）
 - ❌ 平台 description 数字与视频实际口播对不上
-- ❌ 4 平台描述风格不一（小红书 emoji + 共情 / B 站 ➤ 列表 / YouTube ▸ 列表 + 英文 hashtag / 抖音极短钩子 + 话题）
+- ❌ 3 平台描述风格不一（小红书 emoji + 共情 / B 站 ➤ 列表 / 抖音极短钩子 + 话题）
 
 平台节奏差异：
 | 平台 | 标题长度 | description | 风格特点 |
 |---|---|---|---|
-| YouTube | 中（80 字内）| 长（500-800 字）| ▸ 列表 / 论文链接 / 英文 hashtag |
 | Bilibili | 中（80 字内）| 中（300-500 字）| ➤ 列表 / 知识区氛围 / 简洁 |
 | 抖音 | 短（50 字内含 hashtag）| 仅话题 | 极致钩子前置 |
 | 小红书 | 短（30 字内 emoji）| 中（300 字）| ✅ 列表 / emoji / 共情口吻 |

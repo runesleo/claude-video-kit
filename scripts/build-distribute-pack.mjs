@@ -4,7 +4,11 @@
  *
  * Emits per-platform upload packages for a rendered project.
  *
- *   <project>/distribute/{bilibili,youtube,xiaohongshu,douyin}/
+ *   <project>/distribute/{bilibili,xiaohongshu,douyin}/
+ *
+ * YouTube is intentionally NOT in this pack. New flow: video posts to X
+ * first, then `~/.config/youtube/upload.py` re-publishes the local mp4
+ * directly with title/description hand-crafted at upload time.
  *     01-title.txt
  *     02-description.txt
  *     03-chapters.txt
@@ -29,15 +33,13 @@
 import fs from "node:fs";
 import path from "node:path";
 
-// Per-platform blacklists. YouTube is exempt (no China regulator surface).
-// Keep lists conservative and WARN on match instead of silently stripping —
-// operators should decide whether the match is a false-positive like
-// "盈利模型" (a neutral analytics term) before deleting text.
+// Per-platform blacklists. Keep lists conservative and WARN on match instead
+// of silently stripping — operators should decide whether the match is a
+// false-positive like "盈利模型" (a neutral analytics term) before deleting text.
 const PLATFORM_BANNED_WORDS = {
   bilibili:    ["博彩", "赌博", "下注", "押注", "投注"],
   douyin:      ["博彩", "赌博", "下注", "押注", "投注"],
   xiaohongshu: ["博彩", "赌博", "下注", "押注", "投注"],
-  youtube:     [],
 };
 const PLATFORMS = Object.keys(PLATFORM_BANNED_WORDS);
 
