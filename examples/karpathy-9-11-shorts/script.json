@@ -1,0 +1,110 @@
+{
+  "title": "ChatGPT 在小学题翻车的真正原因 (shorts)",
+  "preset": "shorts",
+  "fps": 30,
+  "brand": {
+    "handle": "@runes_leo",
+    "url": "leolabs.me",
+    "logoSrc": "leo-labs-logo.jpeg",
+    "accentColor": "#f59e0b"
+  },
+  "_note": "Karpathy 'Deep Dive into LLMs' 解读系列 #1 · 单点反常识 + tokenizer 切词演示 · 跨圈钩子 · 评论区放原视频 https://www.youtube.com/watch?v=7xTGNNLPyMI",
+  "slides": [
+    {
+      "type": "cover",
+      "title": "ChatGPT 能解 PhD 物理\n却在这道小学题翻车",
+      "subtitle": "原因不在数学",
+      "eyebrow": "Karpathy 新视频解读",
+      "accentColor": "#f59e0b",
+      "voice_text": "ChatGPT 能解博士级别的物理题，却会在一道小学数学题上稳定翻车。",
+      "caption_text": "ChatGPT 能解 PhD 物理 · 却在这道小学题翻车"
+    },
+    {
+      "type": "numberHero",
+      "heroValue": "9.11 > 9.9 ?",
+      "heroLabel": "ChatGPT 答：9.11 大",
+      "heroBadge": "翻车现场",
+      "heroAccentColor": "#ef4444",
+      "voice_text": "我问它，9.11 比 9.9 哪个大？它说 9.11 大。这个答案，错。",
+      "caption_text": "9.11 > 9.9? · ChatGPT 答 9.11 大 · 错"
+    },
+    {
+      "type": "text",
+      "textMode": "hero",
+      "textReveal": "spring",
+      "text": "Karpathy 三小时新视频\n专门讲了这个 bug",
+      "accentColor": "#a78bfa",
+      "voice_text": "Andrej Karpathy 最近发了一个三小时讲 LLM 的视频，里面专门讲了这个 bug 为什么修不掉。",
+      "caption_text": "Karpathy 三小时讲 LLM 新视频 · 专门讲了这个 bug"
+    },
+    {
+      "type": "numberHero",
+      "heroValue": "不是数学差",
+      "heroLabel": "是看不见这串字",
+      "heroBadge": "原因",
+      "heroAccentColor": "#10b981",
+      "voice_text": "原因不是模型数学差。是它根本看不见 9.11 和 9.9 这两串字符。",
+      "caption_text": "不是数学差 · 是看不见这串字"
+    },
+    {
+      "type": "text",
+      "textMode": "hero",
+      "text": "模型读到的不是数字\n是 token",
+      "accentColor": "#3b82f6",
+      "voice_text": "模型读到的不是数字本身，是 token，也就是被切碎的字符片段。",
+      "caption_text": "模型读到的不是数字 · 是 token (字符片段)"
+    },
+    {
+      "type": "numberHero",
+      "heroValue": "[ 9 ｜ . ｜ 11 ]",
+      "heroLabel": "9.11 在模型眼里",
+      "heroBadge": "切片",
+      "heroAccentColor": "#3b82f6",
+      "voice_text": "9.11 在它眼里，被切成三段：9、点、11。",
+      "caption_text": "9.11 → [ 9 · . · 11 ]"
+    },
+    {
+      "type": "numberHero",
+      "heroValue": "[ 9 ｜ . ｜ 9 ]",
+      "heroLabel": "9.9 在模型眼里",
+      "heroBadge": "切片",
+      "heroAccentColor": "#3b82f6",
+      "voice_text": "9.9 被切成的也是三段：9、点、然后又是 9。",
+      "caption_text": "9.9 → [ 9 · . · 9 ]"
+    },
+    {
+      "type": "numberHero",
+      "heroValue": "11 > 9",
+      "heroLabel": "模型对比的是这两个数",
+      "heroBadge": "结论",
+      "heroAccentColor": "#ec4899",
+      "voice_text": "在它的世界里，11 比 9 大，所以它说 9.11 比 9.9 大。",
+      "caption_text": "在 token 空间里 · 11 大于 9"
+    },
+    {
+      "type": "text",
+      "textMode": "hero",
+      "text": "数 strawberry 几个 r\n字母拼接、计数\n全是同一种翻车",
+      "accentColor": "#f59e0b",
+      "voice_text": "你问它草莓 strawberry 这个词里有几个字母 r，它经常自信答错。同一种翻车。",
+      "caption_text": "数 strawberry 几个 r · 也常答错 · 同一种翻车"
+    },
+    {
+      "type": "cover",
+      "title": "用 AI 的真本事\n是知道它哪里看不见",
+      "subtitle": "不是写 prompt 多花哨",
+      "accentColor": "#f59e0b",
+      "voice_text": "用大模型的真本事，不是 prompt 写得多花哨。是脑子里有一份它会翻车的清单。",
+      "caption_text": "用 AI 的真本事 · 知道它哪里看不见"
+    },
+    {
+      "type": "cover",
+      "title": "@runes_leo · leolabs.me",
+      "subtitle": "AI × Crypto 独立构建者",
+      "eyebrow": "Learn in public, Build in public",
+      "accentColor": "#f59e0b",
+      "voice_text": "我是 Leo，做 AI 和加密的独立构建者。在 Polymarket 做量化，用 Claude Code 搭数据和自动化系统。更多在 leolabs.me，下次见。",
+      "caption_text": "Polymarket 量化 · Claude Code 搭系统 · leolabs.me"
+    }
+  ]
+}
