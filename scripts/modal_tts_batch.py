@@ -22,6 +22,33 @@ import argparse
 
 app = modal.App("claude-video-kit-tts")
 
+
+# Pronunciation pre-processing.
+#
+# IndexTTS2 (even on Modal A10G fp16) sometimes mispronounces English letter
+# initialisms and domain names embedded in Chinese context. Substitute with
+# Chinese phonetic equivalents BEFORE TTS so audio comes out right; the
+# original voice_text in script.json stays unchanged so align/caption still
+# render the original spelling.
+#
+# Add new entries when you hit a new mispronunciation. Order matters:
+# longer / more-specific keys first to avoid partial-match conflicts.
+PRONUNCIATION_FIXES = [
+    # 域名 "." 不加空格会被当中文句号读错节奏（Leo 验收 OK）
+    ("leolabs.me", "leolabs点 me"),
+    # 注: "AI" 历史撞过 IndexTTS2 不稳定读成 "A1"/"I1"。直译"诶艾"或
+    # 替换"人工智能"都不自然（Leo 反馈"英文不能这样读"）。当前策略 =
+    # 多次跑 + _good/<NN>.wav 锁定念对的版本（wav cache 复用机制），
+    # 不靠预处理替换。voice_text 给足上下文 hint 即可。
+]
+
+
+def apply_pronunciation_fixes(text: str) -> str:
+    for k, v in PRONUNCIATION_FIXES:
+        text = text.replace(k, v)
+    return text
+
+
 image = (
     modal.Image.debian_slim(python_version="3.10")
     .apt_install("git", "ffmpeg", "libsndfile1", "build-essential")
@@ -115,16 +142,45 @@ def main(project: str = "examples/ai-resume-bias-truth-shorts"):
         raise SystemExit(f"missing voice ref {VOICE_REF}")
 
     data = json.loads(SCRIPT.read_text())
+
+    # _good/ wav cache reuse mechanism.
+    #
+    # IndexTTS2 is non-deterministic (sampling temperature). Same voice_text
+    # may pronounce English words right one run and wrong another. Workflow:
+    #   1. Run modal_tts → listen
+    #   2. For slides that pronounced correctly: cp workspace/NN.wav workspace/_good/NN.wav
+    #   3. Re-run modal_tts → automatically skips slides with _good/NN.wav, only
+    #      regenerates the failed ones
+    #   4. Repeat until all marked good. From then on, modal cost = 0 for
+    #      unchanged voice_text.
+    GOOD_DIR = WORKSPACE / "_good"
+    GOOD_DIR.mkdir(exist_ok=True)
+
     entries = {}
+    reused = 0
     for i, slide in enumerate(data.get("slides", [])):
         text = slide.get("voice_text") or slide.get("text") or slide.get("title")
         if not text:
             continue
-        entries[str(i)] = text
-    if not entries:
-        raise SystemExit("no voice_text in script.json")
 
-    print(f">> submitting {len(entries)} slides to Modal A10G...")
+        good_wav = GOOD_DIR / f"{i:02d}.wav"
+        if good_wav.exists():
+            target = WORKSPACE / f"{i:02d}.wav"
+            target.write_bytes(good_wav.read_bytes())
+            print(f"  slide {i}: reusing _good/{i:02d}.wav (skip modal)", flush=True)
+            reused += 1
+            continue
+
+        fixed = apply_pronunciation_fixes(text)
+        if fixed != text:
+            print(f"  slide {i}: pronunciation fixed → {fixed[:60]}...", flush=True)
+        entries[str(i)] = fixed
+
+    if not entries:
+        print(f">> all {reused} slides reused from _good/, skipping modal entirely")
+        return
+
+    print(f">> submitting {len(entries)} slides to Modal A10G ({reused} reused from _good/)...")
     t0 = time.time()
     results = infer_batch.remote(VOICE_REF.read_bytes(), entries)
     dt = time.time() - t0
@@ -133,3 +189,4 @@ def main(project: str = "examples/ai-resume-bias-truth-shorts"):
         out = WORKSPACE / f"{int(num):02d}.wav"
         out.write_bytes(wav_bytes)
     print(f">> {len(results)} wavs saved to {WORKSPACE} in {dt/60:.1f}min")
+    print(f">> tip: cp workspace/NN.wav workspace/_good/NN.wav to lock pronunciations you like")

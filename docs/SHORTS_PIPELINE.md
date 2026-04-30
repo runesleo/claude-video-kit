@@ -60,6 +60,33 @@ to X (Leo manual), then Claude re-publishes the local mp4 to YouTube via
 }
 ```
 
+### 结尾 slide 模板（P0 强制 · 2026-04-30 立）
+
+每个 shorts 必须以两个 slide 结尾：
+
+1. **倒数第二**：内容金句（本期主题相关，可变）
+2. **最后**：品牌签名 cover（**固定模板，不可变**）
+
+```jsonc
+{
+  "type": "cover",
+  "title": "@runes_leo · leolabs.me",
+  "subtitle": "AI × Crypto 独立构建者",
+  "eyebrow": "Learn in public, Build in public",
+  "accentColor": "#f59e0b",
+  "voice_text": "我是 Leo，做 AI 和加密的独立构建者。在 Polymarket 做量化，用 Claude Code 搭数据和自动化系统。更多在 leolabs.me，下次见。",
+  "caption_text": "Polymarket 量化 · Claude Code 搭系统 · leolabs.me"
+}
+```
+
+参考 `~/Projects/leo-vault/domains/内容创作/_SOP-文章尾部模板.md` 文章版结尾 SSOT。
+
+**禁止**：
+- 用最后一帧给外部大佬 / 源头视频引流（流量送给别人）
+- 每条视频重新发明结尾文案（品牌识别一致性靠模板）
+
+**外部链接路由**：评论区跟推 + 各平台描述里都可放，不挤进视频帧。
+
 ### voice_text 写作准则（P0 强制）
 
 1. **逻辑自洽**：不引用前文没出现的数字。视频文稿"裸读"也要从头到尾结构清晰。
@@ -89,7 +116,28 @@ modal run scripts/modal_tts_batch.py --project examples/<name>
 
 读 `script.json` → 每 slide 的 `voice_text` 走 IndexTTS2 → 写入 `examples/<name>/workspace/NN.wav`（10 条 ~3min）。
 
-**注**: 脚本不支持 skip-if-exists，单条改动也要全跑。要省时间可改 `voice_text` 后只跑变动条目（手动管理 wav 文件名）。
+### `_good/` wav 复用机制（2026-04-30 立）
+
+IndexTTS2 是非确定性的（sampling temperature）。同样的 voice_text 可能这次念对英文下次念错。**工作流**：
+
+1. 跑 modal_tts → 听一遍
+2. 念对的 slide cp 到 `_good/`：`cp workspace/NN.wav workspace/_good/NN.wav`
+3. 重跑 modal_tts → 自动跳过 `_good/` 里有的 slide，只重跑念错的
+4. 重复直到全部 mark good。从此这条视频再跑 modal cost = 0
+
+`modal_tts_batch.py` 启动时检查 `workspace/_good/<NN>.wav`，存在则直接复用 + 跳过该 slide 的 modal 调用。
+
+### `PRONUNCIATION_FIXES` 字典
+
+`modal_tts_batch.py` 顶部的预处理 dict，在送 IndexTTS2 前替换文本（原 `voice_text` 不动，align/caption 仍用原文）。处理稳定可知的发音问题：
+
+```python
+PRONUNCIATION_FIXES = [
+    ("leolabs.me", "leolabs点 me"),  # 域名 "." 当中文句号读错节奏
+]
+```
+
+撞到新发音错的词加一行。**注意**：英文字母组合（如 "AI"）不要加这里——音译"诶艾"/"人工智能"都不自然，靠 `_good/` 多次跑选对的版本。
 
 ---
 
@@ -99,17 +147,20 @@ modal run scripts/modal_tts_batch.py --project examples/<name>
 cd workspace && mkdir -p _orig && cp [0-9]*.wav _orig/
 for f in [0-9]*.wav; do
   ffmpeg -y -i _orig/$f \
-    -af "silenceremove=stop_periods=-1:stop_duration=0.2:stop_threshold=-40dB,loudnorm=I=-14:TP=-1.5:LRA=11" \
-    -ar 24000 $f
+    -af "areverse,silenceremove=start_periods=1:start_silence=0.3:start_threshold=-40dB,areverse,loudnorm=I=-14:TP=-1.5:LRA=11" \
+    -ar 24000 /tmp/out_$f
+  mv /tmp/out_$f $f
 done
 ```
 
 **两个滤镜不可省**：
 
-- `silenceremove=stop_periods=-1:stop_duration=0.2:stop_threshold=-40dB` — 切**尾部** silence/noise tail。否则 IndexTTS2 末尾的低电平 "shhh" 噪音会被 loudnorm 放大听得见。
-- `loudnorm=I=-14:TP=-1.5:LRA=11` — 标准化到 -14 LUFS / -1.5 dBTP。这是 YouTube / X / 抖音 / 小红书统一标准。直接用 IndexTTS2 原始输出 mean ~-35 dB 太小，手机外放听不清。
+- `areverse → silenceremove start_periods=1 → areverse` — 标准的"只切尾部静音"模式。**不要用 `stop_periods=-1`**（会切所有静音段，吞掉句子之间的自然停顿，2026-04-30 Leo 实测 slide 01 被切 41% 时长）。原理：反转音频让尾部变开头，切第一个静音段，再反转回来。
+- `loudnorm=I=-14:TP=-1.5:LRA=11` — 标准化到 -14 LUFS / -1.5 dBTP。YouTube / X / 抖音 / 小红书统一标准。
 
-**常见坑**：不要加 `afade=t=out:d=0.001:duration=0` — 这是 invalid syntax，会让 ffmpeg 把整段音频 fade 到 0（mean -78dB ≈ 静音）。
+**常见坑**：
+- 不要加 `afade=t=out:d=0.001:duration=0` — invalid syntax，会让 ffmpeg 把整段音频 fade 到 0（mean -78dB ≈ 静音）。
+- 不要用 `stop_periods=-1` — 切所有静音段而非只尾部，吞中间停顿。
 
 **验证**：
 ```bash
@@ -274,6 +325,40 @@ preset: "long"    →  1920×1080 / 30fps / fontScale=0.9 / max 7200s（Phase 3 
 
 ---
 
+## Step 5.5 · 审核 stop 门（P0 强制 · 2026-04-30 立）
+
+**Render 后必须 Leo 审视频，禁自动进 Step 6 分发链**。流程：
+
+1. `open <project>/out/full.mp4` 给 Leo 审
+2. 等明确"OK / 通过 / 发布"等确认词
+3. 通过 → Step 6 分发包 + Step 7 各平台发布
+4. 不通过 → 回上游修（script.json / voice_text / slide）→ 重跑
+
+**禁止**：render 完直接调 youtube/upload.py 或 push X / TG / B 站。
+**违规事件**：2026-04-30 第一次跑通 #10 视频，render 后直接调 youtube unlisted upload，被 Leo 当场叫停（output 0 byte 没真传）。
+
+---
+
+## 画面素材决策树（按视频类型自动选）
+
+| 视频类型 | 默认画面 | 回避 |
+|---------|---------|------|
+| **反常识科普 / AI 翻车 demo** | 屏幕录制实际翻车 + 文字卡叠原理（30min 出片） | 纯文字卡（信号低）/ 大佬视频片段（版权 + 剪辑成本） |
+| **工具 demo / Build in Public** | 屏幕录制完整流程 + 文字卡叠步骤 | 抽象动画 |
+| **观点 / 冷思考** | 文字卡为主 + 必要数据图 | 屏幕录制（无可演示对象） |
+
+## CTA 决策树（按资产可用性自动选）
+
+```
+1. 自家 Article / Repo / Skill 已发布 → 链接到自家资产
+2. 自家 Article / Repo 已规划但未发布 → "完整版评论区 / 钉推即将更新"
+3. 都没有 → 引用源头大佬链接（信用资产，放评论区）+ pin 自己最近相关推
+```
+
+视频里**最后一帧**永远是品牌签名 cover（见 Step 1 §结尾 slide 模板），不是任何外部链接。
+
+---
+
 ## Step 6 · 分发包 + 网盘上传（定稿后强制）
 
 视频本体定稿（Leo 验收 OK）后**必须立即做**这一步，禁拖延、禁跳：
@@ -366,6 +451,11 @@ Shorts viral norm：
 | 10 | 字幕被强制切 4 行 | wrap `targetPerLine + 2` + 强制 merge 第 4 行回第 3 行 |
 | 11 | 文稿提"95%"前文没出现 → 观众一脸懵 | voice_text 准则：逻辑自洽，裸读能懂 |
 | 12 | 没 verify 引用就让 Leo 返工 | 写内容前先 grep 历史研究记录（P0 `pattern_recall_leo_history_before_content`）|
+| 13 | `silenceremove stop_periods=-1` 切所有静音段（吞中间停顿，slide 01 被切 41%） | 改用 `areverse → silenceremove start_periods=1 start_silence=0.3 → areverse` 只切尾部 |
+| 14 | `align.py` 用字符比例分配时间，对 voice_text 含英文专有名词时严重错位 | 新算法 `captions_from_script_whisper_aligned`：whisper word-timestamp 给 timing + voice_text 给文字。`--legacy-char-ratio` 退回旧逻辑 |
+| 15 | `split_by_punct` 切 "9.11" / "leolabs.me" 的 `.` → 字幕显示成 "9", "11" | 正则加 lookahead/lookbehind：`(?<![\w\d])\.|\.(?![\w\d])`，前后是字母数字的 `.` 不切 |
+| 16 | IndexTTS2 把 "AI" 不稳定读成 "A1"/"I1"，多次跑结果不同 | `_good/<NN>.wav` 复用机制：跑对的 wav cp 到 `_good/`，下次自动跳过 modal。配 `PRONUNCIATION_FIXES` dict 处理域名 `.` 等稳定问题 |
+| 17 | 视频结尾用"Karpathy 视频原链接评论区"给外部大佬引流 | P0 强制结尾 cover 模板（@runes_leo / leolabs.me / Polymarket 量化 / Claude Code 搭系统 / Learn in public, Build in public），外部链接一律去评论区跟推 |
 
 ---
 
