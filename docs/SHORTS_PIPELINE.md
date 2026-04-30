@@ -6,13 +6,15 @@
 Phase 1 of claude-video-kit's video format routing: vertical 9:16 short
 videos (≤60s, big text, dense motion) for 抖音 / TikTok / 小红书 / B 站 Shorts.
 
-YouTube Shorts is **out of this delivery pack**. New flow: video first ships
-to X (Leo manual), then Claude re-publishes the local mp4 to YouTube via
-`~/.config/youtube/upload.py` with title/description authored at upload time.
+**YouTube 和 B 站走 API 直发，平行并列，不进网盘交付包**。视频在 X 定稿后：
+- YouTube: `~/.config/youtube/upload.py`（OAuth；title / description 在命令里手写）
+- B 站:    `~/.config/bilibili/upload.py <project>`（biliup CLI 底层；读 `distribute/bilibili/` metadata；默认 tid=231 科学科普）
+
+网盘交付包**只为抖音 / 小红书**生成（家人代发，封号风险高不做自动化）。
 
 ---
 
-## 端到端管线（6 步）
+## 端到端管线（7 步）
 
 ```
 1. 写 script.json   →  含 brand + slides (voice_text / caption_text 可选)
@@ -21,10 +23,15 @@ to X (Leo manual), then Claude re-publishes the local mp4 to YouTube via
 4. align.py         →  workspace/captions.json (按 voice_text 一字不差对齐)
 5. render + mux     →  remotion render + ffmpeg +faststart
 6. 分发包 + 网盘     →  ⚠️ 定稿后强制流程，禁跳
-                        ① 3 平台 metadata 全部按定稿文稿同步刷新（B站/抖音/小红书；YouTube 走 X→upload.py 链路另发）
+                        ① 3 平台 metadata 全部按定稿文稿同步刷新（B站/抖音/小红书）
                         ② cover.png 重抓（frame ≥1.0s）
                         ③ subtitles-zh.srt 从最新 captions.json 重生
-                        ④ 整个 distribute/ 文件夹形式上传百度网盘（禁打包 zip）
+                        ④ 抖音 / 小红书 distribute 文件夹上传百度网盘（家人代发；禁打包 zip）
+                           B 站的 distribute/bilibili/ 不进网盘，作 Step 7 的 metadata 来源
+7. 平台发布          →  Leo 各一行命令，YouTube + B 站平行 API 直发
+                        - YouTube: `python3 ~/.config/youtube/upload.py`
+                        - B 站:    `python3 ~/.config/bilibili/upload.py <project>`
+                        抖音 / 小红书继续 Step 6 网盘 → 家人代发
 ```
 
 每步标准在下文。
@@ -334,7 +341,7 @@ preset: "long"    →  1920×1080 / 30fps / fontScale=0.9 / max 7200s（Phase 3 
 3. 通过 → Step 6 分发包 + Step 7 各平台发布
 4. 不通过 → 回上游修（script.json / voice_text / slide）→ 重跑
 
-**禁止**：render 完直接调 youtube/upload.py 或 push X / TG / B 站。
+**禁止**：render 完直接调 youtube/upload.py、bilibili/upload.py 或 push X / TG。
 **违规事件**：2026-04-30 第一次跑通 #10 视频，render 后直接调 youtube unlisted upload，被 Leo 当场叫停（output 0 byte 没真传）。
 
 ---
@@ -367,7 +374,20 @@ preset: "long"    →  1920×1080 / 30fps / fontScale=0.9 / max 7200s（Phase 3 
 
 每个平台在 `distribute/<platform>/` 下有：title / description-or-正文 / tags。**最终视频文稿改了任何措辞，所有 3 个平台的 description 必须同步更新**。
 
-> YouTube 不在交付包内。视频在 X 定稿后，Claude 用 `~/.config/youtube/upload.py` 直发，title / description 在上传命令里手写。
+> **YouTube 和 B 站都走 API 直发（Step 7）**，不进网盘。
+>
+> 网盘交付**只为抖音 / 小红书**（家人代发）。B 站的 `distribute/bilibili/` 文件作为 `~/.config/bilibili/upload.py` 的 metadata 来源使用，本身不上传网盘。
+
+**双文件名约定**（B 站 metadata，build-distribute-pack.mjs 输出 + Leo 手写覆盖）：
+
+| 用途 | 自动生成（stub） | Leo 手写终稿（优先级更高） |
+|---|---|---|
+| 标题 | `01-title.txt` | `01-标题.txt` |
+| 描述 | `02-description.txt` | `02-描述.txt` |
+| 章节 | `03-chapters.txt` | `03-章节.txt` |
+| 标签 | `04-tags.txt` | `04-标签.txt` |
+
+`upload.py` 优先读中文版（手写更精致），fallback 英文版。
 
 红线：
 - ❌ 平台 description 引用了视频删掉的钩子（如 "95%" strawman）
@@ -405,6 +425,47 @@ BaiduPCS-Go share set /claude-video-kit/<slug>/
 ```
 
 输出 share URL 给 Leo。
+
+---
+
+## Step 7 · 平台发布（YouTube + B 站 API 直发，平行并列 · 2026-04-30 立）
+
+Step 6 完成后，Leo 各跑一行命令完成 YouTube 和 B 站发布。两个平台**平行并列**，没有顺序依赖。
+
+### 7.1 YouTube 直发
+
+```bash
+python3 ~/.config/youtube/upload.py
+# title / description 在命令里输入
+```
+
+依赖：`~/.config/youtube/{client_secret.json, token.json}`（OAuth 已配，token 自动 refresh）
+
+### 7.2 B 站直发
+
+```bash
+python3 ~/.config/bilibili/upload.py <project_dir>
+# 默认 tid=231 科学科普, copyright=1 自制
+# 自动读 distribute/bilibili/ 下 title / desc / tags / chapters
+```
+
+依赖：
+- `~/.local/bin/biliup` （v0.2.4 binary，aarch64-macos）
+- `~/.config/bilibili/cookies.json` （扫码登录生成；过期跑 `cd ~/.config/bilibili/ && ~/.local/bin/biliup login` 重扫）
+
+可选参数：
+- `--tid <int>` — 换分区（231=科学科普 / 171=科技数码 / 完整列表查 `https://api.bilibili.com/x/web-interface/zone`）
+- `--cover <path>` — 自定义封面（默认查 `cover.png` / `distribute/bilibili/cover.png`，找不到 B 站自动截首帧）
+- `--copyright 2 --source <url>` — 转载视频
+- `--dry-run` — 只打印参数不上传（首次跑务必 dry-run 验证）
+
+成功输出：BV 号 + aid + 上传线路 + 进入 B 站审核（一般 30min 内过审）。
+
+**首次实测样例**（2026-04-30）：karpathy-9-11-shorts → BV1iw9aBSEpk，14MB / 38s / 0.40 MB/s（bda2 线路）。
+
+### 7.3 抖音 / 小红书
+
+继续走 Step 6 网盘交付链 → 家人手动发布。**不做自动化**：抖音/小红书风控对脚本/cookie 自动化敏感，账号有积累的情况下封号代价 > 自动化收益。
 
 ---
 
