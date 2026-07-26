@@ -1,0 +1,74 @@
+{
+  "title": "Leo Labs · 三把 Agent 真闸 (OKX.AI #3977)",
+  "preset": "shorts",
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "brand": {
+    "handle": "@runes_leo",
+    "url": "leolabs.me · api.leolabs.me",
+    "logoSrc": "leo-labs-logo.jpeg",
+    "accentColor": "#4fae50"
+  },
+  "_meta": {
+    "cover_template": "single_punch",
+    "cover_hook": "先别抄那张晒单",
+    "cover_sub": "三把 Agent 真闸 · OKX.AI #3977",
+    "cover_extra_sizes": ["1x1"]
+  },
+  "_note": "用 claude-video-kit 正轨：cover + numberHero + table。配音应走 Fish Audio；缺 key 时本地 say 仅联调。",
+  "slides": [
+    {
+      "type": "cover",
+      "title": "先别抄那张晒单",
+      "subtitle": "Agent 先过闸 · 再谈跟单",
+      "eyebrow": "Leo Labs · OKX.AI #3977",
+      "accentColor": "#4fae50",
+      "voice_text": "别人晒一张收益截图，先别抄。Agent 调一次，先过闸。",
+      "caption_text": "先别抄那张晒单 · Agent 先过闸"
+    },
+    {
+      "type": "numberHero",
+      "heroValue": "验真",
+      "heroLabel": "榜 / 持仓 / 现金回流对账",
+      "heroBadge": "第一刀",
+      "heroAccentColor": "#10b981",
+      "voice_text": "第一刀，晒单验真。排行榜、持仓、现金回流对账。对不上就标不完整，别拿截图当真理。",
+      "caption_text": "第一刀 · 晒单验真 · incomplete 诚实标出"
+    },
+    {
+      "type": "table",
+      "title": "第二刀 · 同场矩阵",
+      "tableData": {
+        "headers": ["盘口", "价差", "状态"],
+        "rows": [
+          ["Moneyline", "2.1%", { "text": "OK", "color": "green" }],
+          ["Spread", "6.8%", { "text": "宽", "color": "orange" }],
+          ["BTTS", "9.2%", { "text": "硬闸", "color": "red" }]
+        ],
+        "footer": "缺组 / 未核赛程 → hard_veto",
+        "animateNumbers": false
+      },
+      "voice_text": "第二刀，同场矩阵。一场比赛的盘口放一屏，价差、流动性、互相打架的价格一眼看穿。缺组就硬闸，不装懂。",
+      "caption_text": "第二刀 · 同场矩阵 · 缺组硬闸"
+    },
+    {
+      "type": "numberHero",
+      "heroValue": "三态",
+      "heroLabel": "skip / watch / review",
+      "heroBadge": "第三刀",
+      "heroAccentColor": "#f59e0b",
+      "voice_text": "第三刀，决策卡。下单前只给三个结果：跳过、观望、人工复核。过关不等于买点，也不代下单。",
+      "caption_text": "第三刀 · 决策卡 · 过关 ≠ 买点"
+    },
+    {
+      "type": "cover",
+      "title": "JSON 进 · 结论出",
+      "subtitle": "边缘履约 · 真闸门不是交差片",
+      "eyebrow": "#OKXAI · api.leolabs.me",
+      "accentColor": "#1060b0",
+      "voice_text": "JSON 进，结构化结论出。边缘立刻履约。这是给 Agent 日常用的真闸门，不是交差片。",
+      "caption_text": "JSON 进 · 结论出 · 真闸门不是交差片"
+    }
+  ]
+}
