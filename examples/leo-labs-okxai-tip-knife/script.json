@@ -1,74 +1,80 @@
 {
   "title": "Leo Labs · 三把 Agent 真闸 (OKX.AI #3977)",
-  "preset": "shorts",
-  "width": 1080,
-  "height": 1920,
+  "width": 1920,
+  "height": 1080,
   "fps": 30,
   "brand": {
-    "handle": "@runes_leo",
-    "url": "leolabs.me · api.leolabs.me",
-    "logoSrc": "leo-labs-logo.jpeg",
+    "watermark": "@runes_leo · Leo Labs",
     "accentColor": "#4fae50"
   },
   "_meta": {
-    "cover_template": "single_punch",
+    "cover_template": "data_contrast",
     "cover_hook": "先别抄那张晒单",
     "cover_sub": "三把 Agent 真闸 · OKX.AI #3977",
-    "cover_extra_sizes": ["1x1"]
+    "cover_tag": "api.leolabs.me · #OKXAI",
+    "cover_extra_sizes": ["1x1"],
+    "cover_data": {
+      "top_num": "+128%",
+      "top_label": "晒单截图看起来很猛",
+      "punch": "先过闸。",
+      "bottom_num": "incomplete",
+      "bottom_label": "验真对不上就别抄",
+      "tail": "Leo Labs · 晒单验真 / 同场矩阵 / 决策卡",
+      "tag": "api.leolabs.me · #OKXAI"
+    }
   },
-  "_note": "用 claude-video-kit 正轨：cover + numberHero + table。配音应走 Fish Audio；缺 key 时本地 say 仅联调。",
+  "_note": "横版 16:9。配音优先 Fish；无 key 时走 edge-tts（TTS_FALLBACK=edge）。",
   "slides": [
     {
       "type": "cover",
       "title": "先别抄那张晒单",
-      "subtitle": "Agent 先过闸 · 再谈跟单",
-      "eyebrow": "Leo Labs · OKX.AI #3977",
-      "accentColor": "#4fae50",
-      "voice_text": "别人晒一张收益截图，先别抄。Agent 调一次，先过闸。",
-      "caption_text": "先别抄那张晒单 · Agent 先过闸"
+      "subtitle": "Agent 先过闸 · 再谈跟单 / 下单",
+      "voice_text": "别人晒一张收益截图，先别抄。Agent 调一次，先过闸。"
     },
     {
-      "type": "numberHero",
-      "heroValue": "验真",
-      "heroLabel": "榜 / 持仓 / 现金回流对账",
-      "heroBadge": "第一刀",
-      "heroAccentColor": "#10b981",
-      "voice_text": "第一刀，晒单验真。排行榜、持仓、现金回流对账。对不上就标不完整，别拿截图当真理。",
-      "caption_text": "第一刀 · 晒单验真 · incomplete 诚实标出"
+      "type": "content",
+      "title": "第一刀 · 晒单验真",
+      "badge": "/pm-pnl-audit",
+      "badgeGradient": ["#4fae50", "#1060b0"],
+      "bullets": [
+        "排行榜 vs 持仓 cashPnL 对账",
+        "full 现金回流；不全就标 incomplete",
+        "别拿截图当可抄的真理"
+      ],
+      "voice_text": "第一刀，晒单验真。排行榜、持仓、现金回流对账。对不上就标不完整，别拿截图当真理。"
     },
     {
       "type": "table",
-      "title": "第二刀 · 同场矩阵",
+      "title": "第二刀 · 同场矩阵一眼拆穿",
       "tableData": {
-        "headers": ["盘口", "价差", "状态"],
+        "headers": ["盘口", "价差", "流动性", "状态"],
         "rows": [
-          ["Moneyline", "2.1%", { "text": "OK", "color": "green" }],
-          ["Spread", "6.8%", { "text": "宽", "color": "orange" }],
-          ["BTTS", "9.2%", { "text": "硬闸", "color": "red" }]
+          ["Moneyline", "2.1%", "$82k", { "text": "OK", "color": "green" }],
+          ["Spread -0.5", "6.8%", "$11k", { "text": "宽", "color": "orange" }],
+          ["BTTS Yes", "9.2%", "$4k", { "text": "硬闸", "color": "red" }]
         ],
-        "footer": "缺组 / 未核赛程 → hard_veto",
+        "footer": "缺组 / 赛程未核 → hard_veto，不装懂",
         "animateNumbers": false
       },
-      "voice_text": "第二刀，同场矩阵。一场比赛的盘口放一屏，价差、流动性、互相打架的价格一眼看穿。缺组就硬闸，不装懂。",
-      "caption_text": "第二刀 · 同场矩阵 · 缺组硬闸"
+      "voice_text": "第二刀，同场矩阵。一场比赛的盘口放一屏，价差、流动性、互相打架的价格一眼看穿。缺组就硬闸，不装懂。"
     },
     {
-      "type": "numberHero",
-      "heroValue": "三态",
-      "heroLabel": "skip / watch / review",
-      "heroBadge": "第三刀",
-      "heroAccentColor": "#f59e0b",
-      "voice_text": "第三刀，决策卡。下单前只给三个结果：跳过、观望、人工复核。过关不等于买点，也不代下单。",
-      "caption_text": "第三刀 · 决策卡 · 过关 ≠ 买点"
+      "type": "content",
+      "title": "第三刀 · 决策卡",
+      "badge": "skip / watch / review",
+      "badgeGradient": ["#ee943e", "#dc2626"],
+      "bullets": [
+        "下单前只给三态，不给喊单",
+        "eligible ≠ 买点；可带 size 算 shares",
+        "无私钥 · 不下单 · 不托管"
+      ],
+      "voice_text": "第三刀，决策卡。下单前只给三个结果：跳过、观望、人工复核。过关不等于买点，也不代下单。"
     },
     {
       "type": "cover",
       "title": "JSON 进 · 结论出",
-      "subtitle": "边缘履约 · 真闸门不是交差片",
-      "eyebrow": "#OKXAI · api.leolabs.me",
-      "accentColor": "#1060b0",
-      "voice_text": "JSON 进，结构化结论出。边缘立刻履约。这是给 Agent 日常用的真闸门，不是交差片。",
-      "caption_text": "JSON 进 · 结论出 · 真闸门不是交差片"
+      "subtitle": "边缘履约 · 真闸门，不是交差片",
+      "voice_text": "JSON 进，结构化结论出。边缘立刻履约。这是给 Agent 日常用的真闸门，不是交差片。"
     }
   ]
 }

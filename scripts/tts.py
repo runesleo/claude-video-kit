@@ -55,8 +55,49 @@ def fish_tts(text: str, out_path: Path, voice_id: str, api_key: str) -> None:
     out_path.write_bytes(r.content)
 
 
+def edge_tts_fallback(text: str, out_path: Path) -> bool:
+    """Optional edge-tts fallback (better Chinese than macOS say when Fish unset)."""
+    if not shutil.which("edge-tts") or not shutil.which("ffmpeg"):
+        return False
+    voice = os.environ.get("EDGE_TTS_VOICE", "zh-CN-YunyangNeural").strip()
+    rate = os.environ.get("EDGE_TTS_RATE", "+8%").strip()
+    mp3 = out_path.with_suffix(".mp3")
+    try:
+        subprocess.run(
+            [
+                "edge-tts",
+                "--voice", voice,
+                "--rate", rate,
+                "--text", text,
+                "--write-media", str(mp3),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        subprocess.run(
+            [
+                "ffmpeg", "-y", "-i", str(mp3),
+                "-acodec", "pcm_s16le", "-ar", "44100", "-ac", "1",
+                str(out_path),
+            ],
+            check=True,
+            capture_output=True,
+        )
+        mp3.unlink(missing_ok=True)
+        print(f"  (edge-tts fallback: {voice})")
+        return True
+    except (OSError, subprocess.CalledProcessError) as exc:
+        print(f"  (edge-tts failed: {exc})")
+        mp3.unlink(missing_ok=True)
+        return False
+
+
 def local_fallback(text: str, out_path: Path) -> None:
-    """macOS `say` fallback so pipeline runs without an API key."""
+    """Prefer edge-tts when available; else macOS `say` for keyless dry-runs."""
+    prefer = os.environ.get("TTS_FALLBACK", "edge").strip().lower()
+    if prefer != "say" and edge_tts_fallback(text, out_path):
+        return
     if shutil.which("say"):
         aiff = out_path.with_suffix(".aiff")
         cmd = ["say", "-o", str(aiff)]
@@ -71,9 +112,10 @@ def local_fallback(text: str, out_path: Path) -> None:
             capture_output=True,
         )
         aiff.unlink()
+        print("  (macOS say fallback)")
         return
     raise RuntimeError(
-        "No TTS backend available. Set FISH_AUDIO_API_KEY or install `say`/ffmpeg."
+        "No TTS backend available. Set FISH_AUDIO_API_KEY, install edge-tts, or say/ffmpeg."
     )
 
 
