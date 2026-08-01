@@ -15,7 +15,8 @@ Env:
   COSYVOICE_MODEL        默认 "cosyvoice-v3.5-plus"
   COSYVOICE_VOICE_ID     必填；预制音色（默认 voice）或 voice clone 创建后的 id
   COSYVOICE_FORCE        =1 强制重生成
-  COSYVOICE_SPEED        默认 1.08（与 IndexTTS2 对齐）
+  COSYVOICE_SPEED        默认 1.0。⛔ 禁止倍速——Leo 规则：加速产生爆破音。
+                         （2026-08-01 由 1.08 改为 1.0；此前默认值导致多条视频被无意加速）
   COSYVOICE_FORMAT       "wav" / "mp3" 默认 wav
   VOICE_RULES_PATH       optional JSON preprocessing rules; defaults to config sample
 
@@ -39,14 +40,31 @@ DEFAULT_VOICE_RULES_PATH = Path(__file__).resolve().parents[1] / "config" / "voi
 VOICE_RULES_PATH = Path(os.environ.get("VOICE_RULES_PATH", str(DEFAULT_VOICE_RULES_PATH))).expanduser()
 
 
-def load_voice_rules() -> dict:
-    if not VOICE_RULES_PATH.exists():
-        return {}
-    try:
-        return json.loads(VOICE_RULES_PATH.read_text())
-    except Exception as e:
-        print(f"[warn] failed to load voice rules: {e}", flush=True)
-        return {}
+def load_voice_rules(project=None) -> dict:
+    """优先级：环境变量 VOICE_RULES_PATH > <project>/voice-rules.json > kit 默认 sample。
+
+    2026-08-01：此前只认默认 sample，项目目录里的 voice-rules.json **从来不被读**。
+    于是 Ondo 那期在项目里写好的 SPYon / QQQon / USDC 规则形同虚设，
+    SPYon 被念成「斯派」、QQQon 念成「QQ-KONE」——而且 7-31 给 USDT 加的规则
+    也是加在项目文件里，同样一直没生效（当时以为修好了）。
+    「配置放在了工具不看的地方」不会报错，只会安静地念错。
+    """
+    candidates = []
+    if os.environ.get("VOICE_RULES_PATH"):
+        candidates.append(Path(os.environ["VOICE_RULES_PATH"]).expanduser())
+    if project is not None:
+        candidates.append(Path(project) / "voice-rules.json")
+    candidates.append(DEFAULT_VOICE_RULES_PATH)
+
+    for p in candidates:
+        if p.exists():
+            try:
+                rules = json.loads(p.read_text())
+                print(f"[voice rules] source: {p}", flush=True)
+                return rules
+            except Exception as e:
+                print(f"[warn] failed to load voice rules {p}: {e}", flush=True)
+    return {}
 
 
 def preprocess_voice_text(text: str, rules: dict) -> str:
@@ -85,7 +103,12 @@ def extract_text(slide: dict) -> str:
         return slide["voice_text"]
     if "narration" in slide:
         return slide["narration"]
-    if slide.get("type") == "cover":
+    # 2026-08-01：cover 分支必须让位给显式 text。
+    # 事故：Ondo 那期封面与片尾写了 title/subtitle 做画面，text 里另有口播稿，
+    # 结果 TTS 念的是标题（「做市商的资金被锁了两次 这才是股权永续真正的瓶颈」），
+    # 整段开场白和结语的配音直接丢失，而画面看起来完全正常。
+    # 有 text 就以 text 为准；title 只是没写口播时的兜底。
+    if slide.get("type") == "cover" and not (slide.get("text") or "").strip():
         parts = [slide.get("title", ""), slide.get("subtitle", "")]
         return " ".join(p for p in parts if p)
     return slide.get("text", "")
@@ -168,13 +191,34 @@ def main() -> int:
 
     # 2026-05-15 smoke test：v3.5-plus 预制音色名跟文档对不上（可能只支持 voice clone），
     # 先用 cosyvoice-v2 + longxiaochun_v2 跑通管线。最终生产用 Leo voice clone（target_model 自己指定）。
+    # 2026-08-01 修 bug：此前 _meta 注入写在这段之后，导致 script.json 的
+    # cosyvoice_speed / model / voice 永远不生效（读的是环境变量或默认值）。
+    # 这就是「语速改了又变回 1.18」的根因。必须先注入再读。
+    script_preload = json.loads(script_path.read_text())
+    _m = script_preload.get("_meta", {}) if isinstance(script_preload, dict) else {}
+    for _env, _key in (("COSYVOICE_MODEL", "cosyvoice_model"),
+                       ("COSYVOICE_VOICE_ID", "cosyvoice_voice"),
+                       ("COSYVOICE_SPEED", "cosyvoice_speed")):
+        if not os.environ.get(_env) and _m.get(_key) is not None:
+            os.environ[_env] = str(_m[_key])
+
     model = os.environ.get("COSYVOICE_MODEL", "cosyvoice-v2")
     voice = os.environ.get("COSYVOICE_VOICE_ID", "longxiaochun_v2")
     fmt = os.environ.get("COSYVOICE_FORMAT", "wav")
     try:
-        speed = float(os.environ.get("COSYVOICE_SPEED", "1.08"))
+        speed = float(os.environ.get("COSYVOICE_SPEED", "1.0"))  # ⛔ 不要改回 1.08，倍速有爆破音
     except ValueError:
         speed = 1.0
+    # fail closed，不是 warning。2026-08-01：此处原本只打印警告然后照跑，
+    # 于是 ~/.zshenv 里遗留的 COSYVOICE_SPEED=1.18 连续污染了两期视频而没人拦住。
+    # 「警告不是守卫」——要拦就得真的退出。
+    if speed != 1.0:
+        print(f"⛔ speed={speed}x —— Leo 规则：TTS 一律 1.0，倍速产生爆破音。已中止。\n"
+              f"   来源排查顺序：环境变量 COSYVOICE_SPEED（当前 shell / ~/.zshenv）"
+              f" > script.json 的 _meta.cosyvoice_speed > 本脚本默认值。\n"
+              f"   确需倍速请显式 TTS_ALLOW_SPEEDUP=1 重跑。", flush=True)
+        if os.environ.get("TTS_ALLOW_SPEEDUP") != "1":
+            sys.exit(3)
 
     try:
         import dashscope  # noqa: F401
@@ -185,12 +229,12 @@ def main() -> int:
 
     print(f"CosyVoice config: model={model} voice={voice} speed={speed}x format={fmt}", flush=True)
 
-    script = json.loads(script_path.read_text())
+    script = script_preload
     slides = script.get("slides", script) if isinstance(script, dict) else script
     workspace = project / "workspace"
     workspace.mkdir(exist_ok=True)
 
-    voice_rules = load_voice_rules()
+    voice_rules = load_voice_rules(project)
     if voice_rules:
         print(
             f"[voice rules] loaded {len(voice_rules.get('tokens', {}))} tokens + "

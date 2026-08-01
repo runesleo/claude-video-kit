@@ -31,9 +31,27 @@ case "$ALIGN_MODE" in
     ;;
 esac
 
-echo "▶ [1/4] TTS (backend: ${TTS_BACKEND:-fish})"
 PYTHON="${PYTHON:-python3}"
-case "${TTS_BACKEND:-fish}" in
+
+# 2026-08-01：后端必须能从 script.json 的 _meta.tts_backend 读。
+# 事故：Ondo 那期用 cosyvoice 克隆音色录好后，跑了一次 render.sh，
+# 默认 fish 后端把 15.wav 直接覆盖成了别人的声音（27.9s → 22.8s）。
+# 「项目该用哪个后端」是项目的属性，不该只活在某次调用的环境变量里。
+BACKEND="${TTS_BACKEND:-$("$PYTHON" - "$PROJECT" <<'PY'
+import json,sys,pathlib
+try:
+    d=json.loads((pathlib.Path(sys.argv[1])/"script.json").read_text())
+    print(d.get("_meta",{}).get("tts_backend","") or "")
+except Exception:
+    print("")
+PY
+)}"
+BACKEND="${BACKEND:-fish}"
+echo "▶ [1/4] TTS (backend: $BACKEND)"
+case "$BACKEND" in
+  cosyvoice)
+    "$PYTHON" "$KIT_ROOT/scripts/tts_cosyvoice.py" "$PROJECT"
+    ;;
   indextts2)
     "$PYTHON" "$KIT_ROOT/scripts/tts_indextts2.py" "$PROJECT"
     ;;
