@@ -80,7 +80,11 @@ def local_fallback(text: str, out_path: Path) -> None:
 def extract_text(slide: dict) -> str:
     if "voice_text" in slide:
         return slide["voice_text"]
-    if slide.get("type") == "cover":
+    # 2026-08-01：cover 分支必须让位给显式 text（同 tts_cosyvoice.py / tts_indextts2.py）。
+    # 这份是 align.py 直接 import 的那一份——即使项目用 cosyvoice 后端配音，
+    # 字幕仍走这里。Ondo 那期音频念对了、字幕却是封面标题，根因就在这。
+    # 同一个规则散落在四个文件里，改三个不够。
+    if slide.get("type") == "cover" and not (slide.get("text") or "").strip():
         parts = [slide.get("title", ""), slide.get("subtitle", "")]
         return " ".join(p for p in parts if p)
     if slide.get("type") == "code":

@@ -134,17 +134,22 @@ export const CaptionsLayer: React.FC<CaptionsLayerProps> = ({
   position = "bottom",
   highlight,
   accentColor = "#f59e0b",
-  maxCharsPerLine = 10,
+  maxCharsPerLine,
 }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, width } = useVideoConfig();
 
   if (!captions || captions.length === 0) return null;
 
   const active = captions.find((c) => frame >= c.from && frame < c.to);
   if (!active) return null;
 
-  const lines = wrapText(active.text, maxCharsPerLine);
+  // 2026-08-01：默认值原本写死 10 —— 那是竖版 1080 宽的数。横版 1920 沿用同一个值，
+  // 每句都被切成三行小短条（「同时还得在传统券商那 / 边备一笔现金和股票库 / 存去对冲」），
+  // 既断在词中间，又因为行数多而压住画面里的结论条和截图。
+  // 每字约占 88px 宽（含字距），按画布宽度算才对。
+  const autoMax = Math.max(10, Math.round(width / 88));
+  const lines = wrapText(active.text, maxCharsPerLine ?? autoMax);
   const captionFont = 38 * fontScale;
 
   // Spring entrance per-caption: starts at this caption's `from` frame.

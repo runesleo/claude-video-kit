@@ -14,6 +14,8 @@ import { TableSlide, TableCell } from "./compositions/TableSlide";
 import { FormulaSlide, FormulaGroup } from "./compositions/FormulaSlide";
 import { TransitionSlide } from "./compositions/TransitionSlide";
 import { NumberHero } from "./compositions/NumberHero";
+import { ScreenshotSlide, Highlight } from "./compositions/ScreenshotSlide";
+import { FlowDiagram, FlowNode, FlowEdge } from "./compositions/FlowDiagram";
 import { CaptionsLayer, CaptionPosition } from "./compositions/CaptionsLayer";
 import { BrandConfig } from "./compositions/BrandedSlideLayout";
 import { Preset, resolvePreset } from "./presets";
@@ -44,7 +46,9 @@ type SlideMeta = {
     | "table"
     | "formula"
     | "transition"
-    | "numberHero";
+    | "numberHero"
+    | "screenshot"
+    | "flow";
   durationInFrames: number;
   audio?: string;
   captions?: Array<{ from: number; to: number; text: string }>;
@@ -96,6 +100,19 @@ type SlideMeta = {
   formulaCaption?: string;
   formulaPrefix?: string;
 
+  // flow — 机制示意图，节点/连线逐步演出
+  nodes?: FlowNode[];
+  edges?: FlowEdge[];
+  verdict?: string;
+  verdictAt?: number;
+  verdictColor?: "orange" | "green" | "blue" | "red";
+
+  // screenshot — 真实截图 + 动画高亮标注
+  src?: string;
+  highlights?: Highlight[];
+  caption?: string;
+  focus?: { x: number; y: number; w: number; h: number };
+
   // numberHero (shorts data-hook slide)
   heroValue?: string | number;
   heroLabel?: string;
@@ -108,6 +125,9 @@ type SlideMeta = {
   captionHighlight?: string[];
   captionPosition?: CaptionPosition;
   captionMaxCharsPerLine?: number;
+
+  /** screenshot: 截图宽高比，高亮层据此贴合 contain 后的真实图片矩形 */
+  aspect?: number;
 };
 
 type Metadata = {
@@ -236,6 +256,34 @@ const Main: React.FC<Metadata> = (meta) => {
                 rows={slide.tableData.rows}
                 footer={slide.tableData.footer}
                 animateNumbers={slide.tableData.animateNumbers}
+              />
+            )}
+            {slide.type === "flow" && slide.nodes && (
+              <FlowDiagram
+                slideNumber={slideNumber}
+                totalSlides={total}
+                durationInFrames={slide.durationInFrames}
+                brand={meta.brand}
+                title={slide.title}
+                nodes={slide.nodes}
+                edges={slide.edges}
+                verdict={slide.verdict}
+                verdictAt={slide.verdictAt}
+                verdictColor={slide.verdictColor}
+              />
+            )}
+            {slide.type === "screenshot" && slide.src && (
+              <ScreenshotSlide
+                slideNumber={slideNumber}
+                totalSlides={total}
+                durationInFrames={slide.durationInFrames}
+                brand={meta.brand}
+                title={slide.title}
+                src={slide.src}
+                highlights={slide.highlights}
+                caption={slide.caption}
+                focus={slide.focus}
+                aspect={slide.aspect}
               />
             )}
             {slide.type === "formula" && slide.formulaGroups && (
