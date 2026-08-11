@@ -35,14 +35,24 @@ DEFAULT_VOICE_RULES_PATH = Path(__file__).resolve().parents[1] / "config" / "voi
 VOICE_RULES_PATH = Path(os.environ.get("VOICE_RULES_PATH", str(DEFAULT_VOICE_RULES_PATH))).expanduser()
 
 
-def load_voice_rules() -> dict:
-    if not VOICE_RULES_PATH.exists():
-        return {}
-    try:
-        return json.loads(VOICE_RULES_PATH.read_text())
-    except Exception as e:
-        print(f"[warn] failed to load voice rules: {e}", flush=True)
-        return {}
+def load_voice_rules(project=None) -> dict:
+    """优先级：VOICE_RULES_PATH > <project>/voice-rules.json > kit 默认 sample。
+    同 tts_cosyvoice.py，2026-08-01 修：项目级规则此前从不被读取。"""
+    candidates = []
+    if os.environ.get("VOICE_RULES_PATH"):
+        candidates.append(Path(os.environ["VOICE_RULES_PATH"]).expanduser())
+    if project is not None:
+        candidates.append(Path(project) / "voice-rules.json")
+    candidates.append(DEFAULT_VOICE_RULES_PATH)
+    for p in candidates:
+        if p.exists():
+            try:
+                rules = json.loads(p.read_text())
+                print(f"[voice rules] source: {p}", flush=True)
+                return rules
+            except Exception as e:
+                print(f"[warn] failed to load voice rules {p}: {e}", flush=True)
+    return {}
 
 
 def preprocess_voice_text(text: str, rules: dict) -> str:
@@ -103,7 +113,8 @@ def extract_text(slide: dict) -> str:
         return slide["voice_text"]
     if "narration" in slide:
         return slide["narration"]
-    if slide.get("type") == "cover":
+    # 有 text 就以 text 为准（同 tts_cosyvoice.py，2026-08-01 修）
+    if slide.get("type") == "cover" and not (slide.get("text") or "").strip():
         parts = [slide.get("title", ""), slide.get("subtitle", "")]
         return " ".join(p for p in parts if p)
     return slide.get("text", "")
@@ -187,7 +198,7 @@ def main() -> int:
     workspace = project / "workspace"
     workspace.mkdir(exist_ok=True)
 
-    voice_rules = load_voice_rules()
+    voice_rules = load_voice_rules(project)
     if voice_rules:
         print(f"[voice rules] loaded {len(voice_rules.get('tokens', {}))} tokens + {len(voice_rules.get('letters', {}))} letters", flush=True)
 
@@ -230,7 +241,7 @@ def main() -> int:
 
         if out.exists():
             try:
-                speed = float(os.environ.get("INDEXTTS2_SPEED", "1.08"))
+                speed = float(os.environ.get("INDEXTTS2_SPEED", "1.0"))  # ⛔ 不要改回 1.08，倍速有爆破音
             except ValueError:
                 speed = 1.0
             if abs(speed - 1.0) > 0.01:

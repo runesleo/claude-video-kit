@@ -137,6 +137,9 @@ export const CoverSlide: React.FC<CoverSlideProps> = ({
             lineHeight: 1.1,
             fontFamily: "'Inter', -apple-system, 'PingFang SC', sans-serif",
             textShadow: `0 0 80px ${accentColor}55`,
+            // 2026-08-01：title 里的 \n 此前被当空格，中文标题在错的地方折行
+            //（「你手里的美股代币 现在能直 / 接当保证金」）。作者写了换行就该断在那。
+            whiteSpace: "pre-line",
           }}
         >
           {title}
