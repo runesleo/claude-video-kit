@@ -17,6 +17,7 @@ Writes:
 Usage:
     python scripts/align.py <project_dir> [--fps 30] [--model base]
 """
+import re
 import argparse
 import json
 from pathlib import Path
@@ -318,6 +319,10 @@ def main() -> int:
 
     for wav in wavs:
         idx = wav.stem  # "00", "01", ...
+        # 只认 NN.wav。各 QA 步骤会留下 NN.before-phantom-head.wav 这类备份，
+        # 它们不是音轨，撞上 int() 会让整条渲染在最后一步崩掉（2026-08-10 实例）。
+        if not re.fullmatch(r"\d+", idx):
+            continue
         slide_idx = int(idx)
         caption_source = None
         if script and slide_idx < len(script.get("slides", [])):
