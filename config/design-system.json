@@ -1,0 +1,85 @@
+{
+  "$comment": [
+    "Canonical design system — the single source of truth for every video artifact,",
+    "regardless of length or format (shorts, mid-form, long-form).",
+    "",
+    "Why this file exists (2026-08-18): colors were defined in four places that had",
+    "drifted apart — a per-project DESIGN.md, remotion/src/ui-kit/theme.ts, hard-coded",
+    "hex in ContentSlide.tsx, and more hard-coded hex in scripts/gen_video_cover.py.",
+    "Two videos produced a week apart did not look like they came from the same",
+    "pipeline: one cover used #E67E22 on #0d1117, the frames used #ef4444 on #14171f,",
+    "and the project's own DESIGN.md specified #ee943e on #0c0f14. Nothing errored;",
+    "each piece was internally consistent and collectively incoherent.",
+    "",
+    "Values below are taken from the DESIGN.md of the deck whose look was approved,",
+    "so this is a codification of an existing decision, not a new one.",
+    "",
+    "Consumers MUST read from here rather than redeclaring hex:",
+    "  - remotion/src/ui-kit/theme.ts",
+    "  - remotion/src/compositions/*.tsx",
+    "  - scripts/gen_video_cover.py",
+    "A per-project DESIGN.md may only state deviations, and must say why."
+  ],
+  "canvas": {
+    "base": "#0c0f14",
+    "panel": "#141922",
+    "terminal": "#0f1218"
+  },
+  "text": {
+    "primary": "#eef2f7",
+    "muted": "#93a1b2",
+    "onAccent": "#0c0f14"
+  },
+  "semantic": {
+    "$comment": "accent is the only brand color. green/red carry meaning only — never decoration.",
+    "accent": "#ee943e",
+    "accentDeep": "#c9752c",
+    "verified": "#34c98f",
+    "invalid": "#ef6a6a"
+  },
+  "typography": {
+    "sans": [
+      "PingFang SC",
+      "Hiragino Sans GB",
+      "sans-serif"
+    ],
+    "mono": [
+      "IBM Plex Mono",
+      "SFMono-Regular",
+      "monospace"
+    ],
+    "titleSize": [
+      72,
+      96
+    ],
+    "titleWeight": [
+      800,
+      900
+    ],
+    "bodySize": [
+      32,
+      42
+    ],
+    "bodyWeight": [
+      350,
+      500
+    ],
+    "minDataLabelSize": 24,
+    "numericFeature": "tabular-nums",
+    "displayTracking": "-0.03em"
+  },
+  "layout": {
+    "width": 1920,
+    "height": 1080,
+    "safeAreaX": 120,
+    "safeAreaY": 90,
+    "captionBaselineFromBottom": 96,
+    "brandBarHeight": 4,
+    "$brandBarNote": "顶部品牌渐变条的高度（1920 坐标系）。它横贯全宽，属设计的一部分，不是内容溢出 —— 逐帧安全区扫描必须先排除它，否则内容包围盒永远是满幅，2026-08-18 首次扫描即因此误报 169/263 帧。"
+  },
+  "cover": {
+    "$comment": "Cover art inherits canvas/semantic above. Persona is NOT global — see rule.",
+    "watermark": "@runes_leo · leolabs.me",
+    "personaRule": "Prediction-market content: no persona on the cover. Non-PM content: persona per the 2026-07-29 template."
+  }
+}

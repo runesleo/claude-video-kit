@@ -80,6 +80,42 @@ def fit_text(draw: ImageDraw.ImageDraw, text: str, max_w: int, sizes: list[int],
     return f, bbox[2] - bbox[0], bbox[3] - bbox[1], sizes[-1]
 
 
+def shrink_to_fit(draw, text, max_w, size_max, *, floor_ratio=0.35, label=""):
+    """按宽度算出真正装得下的字号，而不是试几档就放弃。
+
+    2026-08-11：原来写成 `for size in [max, .9x, .8x, .7x]: if fits: break`，
+    循环跑完没命中也照样往下画 —— 于是 OKXAI 示例封面的 `incomplete`
+    在 9:16 上被画出画布，左右各截掉一截，屏幕上剩 `comple`。
+    截断不只是难看：`incomplete`(对不上) 被截成看起来像 `complete`(通过)，
+    **封面把整条片子的结论说反了**，而生成器一声不吭。
+
+    版式当初是给 `+128%` `95%` 这种短数字设计的，英文单词一进来就漏。
+    字宽随字号近似线性，所以先量一次再按比例缩，一步到位；
+    收窄到 floor_ratio 以下说明这个词根本不该放这个位置，出声警告。
+    """
+    lo, hi = int(size_max * floor_ratio), size_max
+    best = lo
+    while lo <= hi:                      # 二分，字宽对字号单调
+        mid = (lo + hi) // 2
+        bbox = draw.textbbox((0, 0), text, font=make_font(mid))
+        if (bbox[2] - bbox[0]) <= max_w:
+            best, lo = mid, mid + 1
+        else:
+            hi = mid - 1
+
+    f = make_font(best)
+    bbox = draw.textbbox((0, 0), text, font=f)
+    w = bbox[2] - bbox[0]
+    if w > max_w:
+        # 到了地板还是超宽 —— 只有这时才可能溢出，必须让人看见
+        print(f"  ⚠️  封面{label}「{text}」到最小字号 {best}px 仍超宽 "
+              f"({w} > {max_w})，会被裁。换更短的词。", flush=True)
+    elif best < size_max * 0.6:
+        print(f"  ⚠️  封面{label}「{text}」被压到 {best}px "
+              f"（上限 {size_max}px 的 {best/size_max:.0%}），视觉冲击已经没了。", flush=True)
+    return f, w, bbox[3] - bbox[1]
+
+
 def _render_data_contrast(img, draw, W, H, data, accent_h):
     """Plan A 数字反差版式 — Leo article 招牌:
     layout (9x16 1080×1920):
@@ -118,16 +154,7 @@ def _render_data_contrast(img, draw, W, H, data, accent_h):
     # === TOP_NUM (灰色超大字 - "被抢的") ===
     # 自适应字号 - 按 H 缩放（9:16 H=1920 → ~360, 16:9 H=1080 → ~200）
     top_size_max = int(H * 0.19)
-    candidates = [top_size_max, int(top_size_max*0.9), int(top_size_max*0.8), int(top_size_max*0.7)]
-    f_top = None
-    for size in candidates:
-        f_top = make_font(size)
-        bbox = draw.textbbox((0, 0), top_num, font=f_top)
-        if (bbox[2] - bbox[0]) <= max_w:
-            break
-    bbox = draw.textbbox((0, 0), top_num, font=f_top)
-    lw = bbox[2] - bbox[0]
-    th = bbox[3] - bbox[1]
+    f_top, lw, th = shrink_to_fit(draw, top_num, max_w, top_size_max, label="top_num")
     draw.text(((W - lw) // 2, y_cursor), top_num, fill="#3a3f47", font=f_top)
     y_cursor += int(th + H * 0.018)
 
@@ -150,16 +177,7 @@ def _render_data_contrast(img, draw, W, H, data, accent_h):
 
     # === BOTTOM_NUM (橙色超大字 - "你留的") - 按 H 缩放 ===
     bot_size_max = int(H * 0.23)
-    cand = [bot_size_max, int(bot_size_max*0.9), int(bot_size_max*0.8), int(bot_size_max*0.7)]
-    f_bot = None
-    for size in cand:
-        f_bot = make_font(size)
-        bbox = draw.textbbox((0, 0), bottom_num, font=f_bot)
-        if (bbox[2] - bbox[0]) <= max_w:
-            break
-    bbox = draw.textbbox((0, 0), bottom_num, font=f_bot)
-    lw = bbox[2] - bbox[0]
-    th = bbox[3] - bbox[1]
+    f_bot, lw, th = shrink_to_fit(draw, bottom_num, max_w, bot_size_max, label="bottom_num")
     draw.text(((W - lw) // 2, y_cursor), bottom_num, fill=ACCENT, font=f_bot)
     y_cursor += int(th + H * 0.02)
 

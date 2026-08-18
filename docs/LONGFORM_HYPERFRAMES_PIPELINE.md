@@ -73,7 +73,15 @@ The production long-form workflow auto-lints `long-form` projects and hard-fails
 | Aspect | 9:16 | 16:9 |
 | Engine | Remotion (`render.sh`) | HyperFrames (`npx hyperframes render`) |
 | Review | Studio / distribute | **slide-review.html** + approval JSON |
-| TTS | IndexTTS2 / Fish | **CosyVoice** (long segments) |
+| TTS | **CosyVoice** | **CosyVoice** |
+
+> **TTS backend is CosyVoice for both formats — this is not a per-format choice.**
+> When the channel publishes under a person's own name, the voice is part of that
+> identity; a stock voice makes it someone else talking, and the output sounds
+> perfectly fine, so no QA step will ever catch it. `render.sh` therefore defaults
+> to `cosyvoice`, `COSYVOICE_VOICE_ID` has no fallback to a preset voice, and an
+> unrecognised `TTS_BACKEND` exits non-zero instead of silently falling through to
+> a paid API. IndexTTS2 and Fish remain available for A/B comparison only.
 
 ---
 
