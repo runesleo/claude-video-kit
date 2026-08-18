@@ -9,6 +9,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { LEO_LOGO_DATA_URL } from "./leoLogoData";
+import ds from "../../../config/design-system.json";
 
 interface CoverSlideProps {
   title: string;
@@ -29,6 +30,7 @@ interface CoverSlideProps {
   logoSrc?: string;
   /** EndCard mode: shows multi-platform CTA row (X / site / channel) below subtitle. */
   endCard?: boolean;
+  cnPlatform?: boolean;
   /** EndCard CTAs (3 lines). */
   endCardCTAs?: { label: string; value: string }[];
 }
@@ -49,7 +51,11 @@ export const CoverSlide: React.FC<CoverSlideProps> = ({
   watermarkUrl = "leolabs.me",
   logoSrc,
   endCard = false,
+  // 末镜署名固定取自 design-system.json 的模板锁 —— 不再每条片子手填。
+  // 见该文件 template.$comment：模板定稿后低频变更，默认不动。
   endCardCTAs,
+  /** CN 平台版片尾：按 T288，B站/小红书/抖音/视频号不得出现 TG 等信号入口。 */
+  cnPlatform = false,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -74,6 +80,8 @@ export const CoverSlide: React.FC<CoverSlideProps> = ({
     extrapolateRight: "clamp",
   });
 
+  const resolvedCTAs =
+    endCardCTAs ?? (cnPlatform ? ds.template?.endCard?.ctas_cn : ds.template?.endCard?.ctas);
   const titleFont = (endCard ? 92 : 80) * fontScale;
   const subtitleFont = 40 * fontScale;
   const eyebrowFont = 22 * fontScale;
@@ -155,18 +163,21 @@ export const CoverSlide: React.FC<CoverSlideProps> = ({
             {subtitle}
           </div>
         )}
-        {endCard && endCardCTAs && endCardCTAs.length > 0 && (
+        {endCard && resolvedCTAs && resolvedCTAs.length > 0 && (
           <div
             style={{
               opacity: ctaOpacity,
-              marginTop: 56,
+              // 上移并压缩行距：CaptionsLayer 覆盖在所有镜之上，基线距画布底 96px。
+              // 末镜的口播仍在进行，字幕会盖住最后一条 CTA —— 实测「频道」那行被压。
+              marginTop: 40,
+              marginBottom: 96,
               display: "flex",
               flexDirection: "column",
-              gap: 18,
+              gap: 14,
               alignItems: "center",
             }}
           >
-            {endCardCTAs.map((cta, i) => (
+            {resolvedCTAs.map((cta, i) => (
               <div
                 key={i}
                 style={{

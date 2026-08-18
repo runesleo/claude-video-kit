@@ -23,6 +23,7 @@ import { CaptionsLayer, CaptionPosition } from "./compositions/CaptionsLayer";
 import { BrandConfig } from "./compositions/BrandedSlideLayout";
 import { Preset, resolvePreset } from "./presets";
 import { UiKitDemo } from "./ui-kit/UiKitDemo";
+import { CoverArt, CoverArtProps } from "./compositions/CoverArt";
 import { OkxAspDemo, defaultOkxAspDemoProps, type OkxAspDemoProps } from "./ui-kit/OkxAspDemo";
 
 /**
@@ -92,6 +93,8 @@ type SlideMeta = {
   body?: string;
   badge?: string;
   badgeGradient?: [string, string];
+  /** CN 平台版：按 T288 去掉 TG 等信号入口 */
+  cnPlatform?: boolean;
 
   // table
   tableData?: {
@@ -234,6 +237,7 @@ const Main: React.FC<Metadata> = (meta) => {
                 logoSrc={slide.logoSrc ?? meta.brand?.logoSrc}
                 endCard={slide.endCard}
                 endCardCTAs={slide.endCardCTAs}
+                cnPlatform={slide.cnPlatform}
               />
             )}
             {slide.type === "text" && (
@@ -397,9 +401,46 @@ const Main: React.FC<Metadata> = (meta) => {
 const calcDuration = (m: Metadata) =>
   m.slides.reduce((acc, s) => acc + s.durationInFrames, 0);
 
+const DEFAULT_COVER: CoverArtProps = {
+  eyebrow: "COVER",
+  title: "标题第一行\n标题第二行",
+  subtitle: "副标题",
+};
+
 export const Root: React.FC = () => {
   return (
     <>
+    {/* 数据封面：左结论右证据，图表组件与片内同源，色板同一份 design-system.json。
+        用 `remotion still src/index.ts CoverArt <out.png> --props=...` 渲染。 */}
+    <Composition
+      id="CoverArt"
+      component={CoverArt}
+      // 图表组件靠 spring 生长，frame 0 时柱子宽度为 0、数值 opacity 为 0 ——
+      // 封面是静态图，必须渲动画收敛之后的帧。留 90 帧，渲 --frame=75。
+      durationInFrames={90}
+      fps={30}
+      width={1920}
+      height={1080}
+      defaultProps={DEFAULT_COVER}
+    />
+    <Composition
+      id="CoverArt9x16"
+      component={CoverArt}
+      durationInFrames={90}
+      fps={30}
+      width={1080}
+      height={1920}
+      defaultProps={DEFAULT_COVER}
+    />
+    <Composition
+      id="CoverArt4x3"
+      component={CoverArt}
+      durationInFrames={90}
+      fps={30}
+      width={1440}
+      height={1080}
+      defaultProps={DEFAULT_COVER}
+    />
     <Composition
       id="Main"
       component={Main}
