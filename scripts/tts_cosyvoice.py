@@ -12,10 +12,12 @@ tts_cosyvoice.py — Generate WAV per slide using Alibaba DashScope CosyVoice.
 
 Env:
   DASHSCOPE_API_KEY      (P0 必填)
-  COSYVOICE_MODEL        默认 "cosyvoice-v3.5-plus"
-  COSYVOICE_VOICE_ID     必填；预制音色（默认 voice）或 voice clone 创建后的 id
+  COSYVOICE_MODEL        默认 "cosyvoice-v2"（docstring 此前写 v3.5-plus，与代码不符，已按代码更正）
+  COSYVOICE_VOICE_ID     **必填，无默认**；voice clone 创建后的 id。
+                         未设置直接报错退出 —— 不再 fallback 到预制音色 longxiaochun_v2，
+                         否则 env 漏设会静默生成一整条陌生人声音的片子
   COSYVOICE_FORCE        =1 强制重生成
-  COSYVOICE_SPEED        默认 1.08（与 IndexTTS2 对齐）
+  COSYVOICE_SPEED        默认 1.0（**不倍速**：变速会压掉爆破音）。1.08 是与 IndexTTS2 的对照口径，非生产默认
   COSYVOICE_FORMAT       "wav" / "mp3" 默认 wav
   VOICE_RULES_PATH       optional JSON preprocessing rules; defaults to config sample
 
@@ -167,12 +169,21 @@ def main() -> int:
         return 1
 
     # 2026-05-15 smoke test：v3.5-plus 预制音色名跟文档对不上（可能只支持 voice clone），
-    # 先用 cosyvoice-v2 + longxiaochun_v2 跑通管线。最终生产用 Leo voice clone（target_model 自己指定）。
     model = os.environ.get("COSYVOICE_MODEL", "cosyvoice-v2")
-    voice = os.environ.get("COSYVOICE_VOICE_ID", "longxiaochun_v2")
+    # 不再 fallback 到预制音色。此前默认是 longxiaochun_v2，一旦 env 漏设就会
+    # 静默用陌生人的声音生成整条片，而产物听起来完全正常 —— 只有本人能听出不对。
+    voice = os.environ.get("COSYVOICE_VOICE_ID")
+    if not voice:
+        raise SystemExit(
+            "COSYVOICE_VOICE_ID 未设置。本管线只用本人克隆音色，不接受预制音色兜底。\n"
+            "  取得 voice_id：python scripts/leo_voice_clone_create.py\n"
+            "  仅在明确要对照预制音色时，才显式 export COSYVOICE_VOICE_ID=longxiaochun_v2"
+        )
     fmt = os.environ.get("COSYVOICE_FORMAT", "wav")
+    # 默认 1.0，不倍速：变速会压掉爆破音，是本人明确定过的规则。
+    # 旧默认 1.08 是为对齐 IndexTTS2 的语速，但那属于对照口径，不该成为生产默认。
     try:
-        speed = float(os.environ.get("COSYVOICE_SPEED", "1.08"))
+        speed = float(os.environ.get("COSYVOICE_SPEED", "1.0"))
     except ValueError:
         speed = 1.0
 

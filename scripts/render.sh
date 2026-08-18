@@ -31,14 +31,26 @@ case "$ALIGN_MODE" in
     ;;
 esac
 
-echo "▶ [1/4] TTS (backend: ${TTS_BACKEND:-fish})"
+echo "▶ [1/4] TTS (backend: ${TTS_BACKEND:-cosyvoice})"
 PYTHON="${PYTHON:-python3}"
-case "${TTS_BACKEND:-fish}" in
+# 默认 cosyvoice：唯一使用本人克隆音色的后端。其余后端是通用音色，
+# 用在本人署名的内容上等于换了个人说话，因此不作默认，也不作兜底。
+# 未知值一律报错退出 —— 旧版 `fish|*` 的通配兜底会把任何拼错的后端名
+# 静默导向付费 API（2026-08-17 即因此在未确认的情况下产生了一次付费消耗）。
+case "${TTS_BACKEND:-cosyvoice}" in
+  cosyvoice)
+    "$PYTHON" "$KIT_ROOT/scripts/tts_cosyvoice.py" "$PROJECT"
+    ;;
   indextts2)
     "$PYTHON" "$KIT_ROOT/scripts/tts_indextts2.py" "$PROJECT"
     ;;
-  fish|*)
+  fish)
+    echo "  ⚠️  fish = 通用音色 + 付费 API，非本人声音。仅供对照测试，不要用于发布内容。" >&2
     "$PYTHON" "$KIT_ROOT/scripts/tts.py" "$PROJECT"
+    ;;
+  *)
+    echo "unsupported TTS_BACKEND: ${TTS_BACKEND} (expected cosyvoice, indextts2 or fish)" >&2
+    exit 2
     ;;
 esac
 
