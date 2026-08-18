@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 # Types that put real, data-driven graphics on screen.
-CHART_TYPES = {"barCompare", "rangeSpan", "scatter"}
+CHART_TYPES = {"barCompare", "rangeSpan", "scatter", "dualColumn", "thresholdGrid"}
 # Types that are words on a background, however nicely arranged.
 TEXT_TYPES = {"content", "text", "transition", "cover", "code"}
 # Tables sit in between: real numbers, but laid out as text.

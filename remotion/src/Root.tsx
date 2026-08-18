@@ -17,6 +17,8 @@ import { NumberHero } from "./compositions/NumberHero";
 import { BarCompare, BarItem } from "./compositions/charts/BarCompare";
 import { RangeSpan, SpanRow } from "./compositions/charts/RangeSpan";
 import { Scatter, Pt } from "./compositions/charts/Scatter";
+import { DualColumn, DualGroup } from "./compositions/charts/DualColumn";
+import { ThresholdGrid, ThresholdCell } from "./compositions/charts/ThresholdGrid";
 import { CaptionsLayer, CaptionPosition } from "./compositions/CaptionsLayer";
 import { BrandConfig } from "./compositions/BrandedSlideLayout";
 import { Preset, resolvePreset } from "./presets";
@@ -50,7 +52,9 @@ type SlideMeta = {
     | "numberHero"
     | "barCompare"
     | "rangeSpan"
-    | "scatter";
+    | "scatter"
+    | "dualColumn"
+    | "thresholdGrid";
   durationInFrames: number;
   audio?: string;
   captions?: Array<{ from: number; to: number; text: string }>;
@@ -118,6 +122,14 @@ type SlideMeta = {
     rLabel?: string;
     xLabel?: string;
     yLabel?: string;
+    // dualColumn
+    groups?: DualGroup[];
+    leftLabel?: string;
+    rightLabel?: string;
+    ratioHeader?: string;
+    // thresholdGrid
+    cells?: ThresholdCell[];
+    verdict?: string;
   };
   footnote?: string;
 
@@ -327,6 +339,31 @@ const Main: React.FC<Metadata> = (meta) => {
                 rLabel={slide.chart.rLabel}
                 xLabel={slide.chart.xLabel}
                 yLabel={slide.chart.yLabel}
+              />
+            )}
+            {slide.type === "dualColumn" && slide.chart?.groups && (
+              <DualColumn
+                slideNumber={slideNumber}
+                totalSlides={total}
+                title={slide.title ?? ""}
+                subtitle={slide.subtitle}
+                footnote={slide.footnote}
+                groups={slide.chart.groups}
+                leftLabel={slide.chart.leftLabel ?? ""}
+                rightLabel={slide.chart.rightLabel ?? ""}
+                unit={slide.chart.unit}
+                ratioHeader={slide.chart.ratioHeader}
+              />
+            )}
+            {slide.type === "thresholdGrid" && slide.chart?.cells && (
+              <ThresholdGrid
+                slideNumber={slideNumber}
+                totalSlides={total}
+                title={slide.title ?? ""}
+                subtitle={slide.subtitle}
+                footnote={slide.footnote}
+                cells={slide.chart.cells}
+                verdict={slide.chart.verdict}
               />
             )}
             {slide.type === "numberHero" && slide.heroValue !== undefined && (
