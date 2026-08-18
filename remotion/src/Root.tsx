@@ -93,6 +93,8 @@ type SlideMeta = {
   body?: string;
   badge?: string;
   badgeGradient?: [string, string];
+  /** CN 平台版：按 T288 去掉 TG 等信号入口 */
+  cnPlatform?: boolean;
 
   // table
   tableData?: {
@@ -235,6 +237,7 @@ const Main: React.FC<Metadata> = (meta) => {
                 logoSrc={slide.logoSrc ?? meta.brand?.logoSrc}
                 endCard={slide.endCard}
                 endCardCTAs={slide.endCardCTAs}
+                cnPlatform={slide.cnPlatform}
               />
             )}
             {slide.type === "text" && (

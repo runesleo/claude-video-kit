@@ -141,7 +141,18 @@
           "value": "t.me/runesgangalpha"
         }
       ],
-      "excluded": "不放返佣、订阅、课程 —— 那些属于分发文案，不进片子。个别片子要放须在 PREPRODUCTION-GATE 写明理由。"
+      "excluded": "不放返佣、订阅、课程 —— 那些属于分发文案，不进片子。个别片子要放须在 PREPRODUCTION-GATE 写明理由。",
+      "$platformNote": "⚠️ 片尾必须分版。CN 平台（B站/小红书/抖音/视频号）按 T288 现行口径 `no_referral_no_signal_no_hard_cta`：**不放 TG 频道等信号入口**，只留身份与研究站点。X / YouTube / TG 可用完整版。2026-08-18 首次发现：一条 PM 主题视频带着 TG 片尾传上了 B站。",
+      "ctas_cn": [
+        {
+          "label": "作者",
+          "value": "Leo · 一个人 + AI"
+        },
+        {
+          "label": "研究",
+          "value": "leolabs.me"
+        }
+      ]
     }
   }
 }

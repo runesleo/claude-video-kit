@@ -30,6 +30,7 @@ interface CoverSlideProps {
   logoSrc?: string;
   /** EndCard mode: shows multi-platform CTA row (X / site / channel) below subtitle. */
   endCard?: boolean;
+  cnPlatform?: boolean;
   /** EndCard CTAs (3 lines). */
   endCardCTAs?: { label: string; value: string }[];
 }
@@ -52,7 +53,9 @@ export const CoverSlide: React.FC<CoverSlideProps> = ({
   endCard = false,
   // 末镜署名固定取自 design-system.json 的模板锁 —— 不再每条片子手填。
   // 见该文件 template.$comment：模板定稿后低频变更，默认不动。
-  endCardCTAs = ds.template?.endCard?.ctas,
+  endCardCTAs,
+  /** CN 平台版片尾：按 T288，B站/小红书/抖音/视频号不得出现 TG 等信号入口。 */
+  cnPlatform = false,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -77,6 +80,8 @@ export const CoverSlide: React.FC<CoverSlideProps> = ({
     extrapolateRight: "clamp",
   });
 
+  const resolvedCTAs =
+    endCardCTAs ?? (cnPlatform ? ds.template?.endCard?.ctas_cn : ds.template?.endCard?.ctas);
   const titleFont = (endCard ? 92 : 80) * fontScale;
   const subtitleFont = 40 * fontScale;
   const eyebrowFont = 22 * fontScale;
@@ -158,7 +163,7 @@ export const CoverSlide: React.FC<CoverSlideProps> = ({
             {subtitle}
           </div>
         )}
-        {endCard && endCardCTAs && endCardCTAs.length > 0 && (
+        {endCard && resolvedCTAs && resolvedCTAs.length > 0 && (
           <div
             style={{
               opacity: ctaOpacity,
@@ -172,7 +177,7 @@ export const CoverSlide: React.FC<CoverSlideProps> = ({
               alignItems: "center",
             }}
           >
-            {endCardCTAs.map((cta, i) => (
+            {resolvedCTAs.map((cta, i) => (
               <div
                 key={i}
                 style={{
