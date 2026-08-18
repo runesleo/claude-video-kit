@@ -18,6 +18,9 @@ npm ci --prefix remotion
 npx skills add runesleo/claude-video-kit --skill video-explainer
 npm run doctor -- --output /tmp/video-explainer-first-success
 npm run demo -- --output /tmp/video-explainer-first-success
+
+# npm scripts are thin wrappers — the underlying command works the same:
+#   node scripts/video-explainer.mjs demo --output /tmp/video-explainer-first-success
 ```
 
 The Skill orchestrates this local clone (it does not bundle Remotion). Demo creates a script-bound pass receipt, uses macOS `say` as an explicitly **demo-quality** voice, renders 1080×1920, and runs the shorts verifier — no API key, no upload. For real projects: `review` then `render`; `fix` / `block` / missing / stale receipts cannot start rendering. The six review checks are product-defined; pass/fail is judged by the reviewer — the tool enforces process, not truth.

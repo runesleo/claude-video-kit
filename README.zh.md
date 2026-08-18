@@ -20,6 +20,9 @@ npm ci --prefix remotion
 npx skills add runesleo/claude-video-kit --skill video-explainer
 npm run doctor -- --output /tmp/video-explainer-first-success
 npm run demo -- --output /tmp/video-explainer-first-success
+
+# npm script 只是薄封装，直接跑底层命令等价：
+#   node scripts/video-explainer.mjs demo --output /tmp/video-explainer-first-success
 ```
 
 Skill 编排的是本仓库本地渲染器（不打包 Remotion）。demo 会生成与脚本绑定的 pass 回执，用 macOS `say` 作**明确标注的 demo 音质**，输出 1080×1920 并跑 shorts 验收——无 API key、不上传。正式项目：先 `review` 再 `render`；`fix` / `block` / 缺失 / 过期都不能开渲。六个检查项是产品定的清单；过不过由 reviewer 判断——工具强制流程，不替你保证内容正确。
