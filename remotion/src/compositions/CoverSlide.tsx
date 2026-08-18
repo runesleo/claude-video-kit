@@ -159,10 +159,13 @@ export const CoverSlide: React.FC<CoverSlideProps> = ({
           <div
             style={{
               opacity: ctaOpacity,
-              marginTop: 56,
+              // 上移并压缩行距：CaptionsLayer 覆盖在所有镜之上，基线距画布底 96px。
+              // 末镜的口播仍在进行，字幕会盖住最后一条 CTA —— 实测「频道」那行被压。
+              marginTop: 40,
+              marginBottom: 96,
               display: "flex",
               flexDirection: "column",
-              gap: 18,
+              gap: 14,
               alignItems: "center",
             }}
           >
