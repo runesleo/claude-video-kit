@@ -71,8 +71,20 @@ cd "$KIT_ROOT/remotion"
 # Note: Remotion v4 --props expects either inline JSON or doesn't auto-load
 # file paths reliably. We pass file content via $(cat) so the JSON is inlined.
 PROPS_JSON="$(cat "$PROJECT/metadata.json")"
-./node_modules/.bin/remotion render src/index.ts Main "$PROJECT/out/full.mp4" \
+# --timeout：默认 30s/帧，重镜（大表格 + Ken Burns）在长片里会超。
+#   超时后 remotion 非零退出，但此前本脚本未检查返回码，整体仍以 exit 0 结束 ——
+#   调用方看到"成功"，out/ 里却没有文件（2026-08-18 实测到一次）。
+REMOTION_FRAME_TIMEOUT="${REMOTION_FRAME_TIMEOUT:-120000}"
+if ! ./node_modules/.bin/remotion render src/index.ts Main "$PROJECT/out/full.mp4" \
   --props="$PROPS_JSON" \
-  --public-dir="$PROJECT/workspace"
+  --public-dir="$PROJECT/workspace" \
+  --timeout="$REMOTION_FRAME_TIMEOUT"; then
+  echo "❌ [4/4] Remotion render 失败 —— 不产出半成品，请勿把上一次的旧文件当本次结果" >&2
+  exit 1
+fi
+if [[ ! -s "$PROJECT/out/full.mp4" ]]; then
+  echo "❌ [4/4] remotion 返回 0 但 out/full.mp4 不存在或为空" >&2
+  exit 1
+fi
 
 echo "✅ done → $PROJECT/out/full.mp4"

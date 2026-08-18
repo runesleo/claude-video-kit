@@ -253,10 +253,14 @@ def main() -> int:
                 tmp.replace(out)
 
         # per-wav loudnorm 到 -20 LUFS （和 IndexTTS2 流程一致）
+        # ⚠️ 必须显式重设 -ar/-ac/-sample_fmt：ffmpeg 的 loudnorm 滤镜内部按 192kHz
+        # 工作，不指定输出格式时会把 22.05kHz 的语音写成 192kHz —— 文件大 8.7 倍，
+        # 且没有任何警告。上游那次 `-ar 22050` 的转换会被这一步悄悄推翻。
         tmp_ln = out.with_suffix(".ln.wav")
         cp_ln = subprocess.run(
             ["ffmpeg", "-y", "-i", str(out),
              "-af", "loudnorm=I=-20:LRA=7:TP=-3",
+             "-ar", "22050", "-ac", "1", "-sample_fmt", "s16",
              str(tmp_ln), "-loglevel", "error"],
             check=False,
         )

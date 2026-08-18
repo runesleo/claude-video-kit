@@ -72,27 +72,43 @@ export const ContentSlide: React.FC<ContentSlideProps> = ({
           marginBottom: hasBullets || body ? 50 : 60,
         }}
       >
-        {badge && (
-          <div
-            style={{
-              width: 80,
-              height: 80,
-              borderRadius: 16,
-              background: `linear-gradient(135deg, ${badgeGradient[0]}, ${badgeGradient[1]})`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 36 * fontScale,
-              fontWeight: 800,
-              color: "#fff",
-              transform: `scale(${interpolate(badgeSpring, [0, 1], [0.5, 1])})`,
-              opacity: badgeSpring,
-              flexShrink: 0,
-            }}
-          >
-            {badge}
-          </div>
-        )}
+        {badge &&
+          (() => {
+            // badge 原本是写死的 80×80 方块 + fontSize 36，没有任何溢出保护。
+            // 超过约 2 个全角字就会溢出容器，压在标题和第一条 bullet 上 ——
+            // 而且渲染不报错，成片看起来"有画面"，QA 只有靠人眼才发现。
+            // 实测一条 5 badge 的片子里 3 个是长文本（日期、相关系数、一句提醒）。
+            // 所以短标签保持方块，长标签自动转 pill：宽度随内容走，永不换行，
+            // 字号按长度收敛，flexShrink:0 保证它不挤压右侧标题。
+            const chars = Array.from(badge).length;
+            const isPill = chars > 2;
+            const fs = (isPill ? (chars > 6 ? 24 : 28) : 36) * fontScale;
+            return (
+              <div
+                style={{
+                  ...(isPill
+                    ? { padding: "0 22px", minWidth: 80 }
+                    : { width: 80 }),
+                  height: 80,
+                  borderRadius: 16,
+                  background: `linear-gradient(135deg, ${badgeGradient[0]}, ${badgeGradient[1]})`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: fs,
+                  fontWeight: 800,
+                  color: "#fff",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  transform: `scale(${interpolate(badgeSpring, [0, 1], [0.5, 1])})`,
+                  opacity: badgeSpring,
+                  flexShrink: 0,
+                }}
+              >
+                {badge}
+              </div>
+            );
+          })()}
         <div
           style={{
             fontSize: 52 * fontScale,
