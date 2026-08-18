@@ -421,6 +421,24 @@ export const Root: React.FC = () => {
       defaultProps={DEFAULT_COVER}
     />
     <Composition
+      id="CoverArt9x16"
+      component={CoverArt}
+      durationInFrames={90}
+      fps={30}
+      width={1080}
+      height={1920}
+      defaultProps={DEFAULT_COVER}
+    />
+    <Composition
+      id="CoverArt4x3"
+      component={CoverArt}
+      durationInFrames={90}
+      fps={30}
+      width={1440}
+      height={1080}
+      defaultProps={DEFAULT_COVER}
+    />
+    <Composition
       id="Main"
       component={Main}
       durationInFrames={1}

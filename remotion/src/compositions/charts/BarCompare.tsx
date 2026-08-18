@@ -46,9 +46,10 @@ const BarRow: React.FC<{
   max: number;
   rowH: number;
   delay: number;
+  compact: boolean;
   unit: string;
   decimals: number;
-}> = ({ item, max, rowH, delay, unit, decimals }) => {
+}> = ({ item, max, rowH, delay, unit, decimals, compact }) => {
   const g = useGrow(delay);
   const n = useCountUp(item.value, delay);
   const w = interpolate(g, [0, 1], [0, (item.value / max) * 100]);
@@ -59,8 +60,8 @@ const BarRow: React.FC<{
     <div style={{ display: "flex", alignItems: "center", gap: 26, height: rowH }}>
       <div
         style={{
-          flex: "0 0 430px",
-          fontSize: 29,
+          flex: compact ? "0 0 210px" : "0 0 430px",
+          fontSize: compact ? 22 : 29,
           textAlign: "right",
           color: emphasised ? DS.text : DS.muted,
           fontWeight: emphasised ? 700 : 400,
@@ -69,7 +70,7 @@ const BarRow: React.FC<{
         {item.label}
       </div>
       {/* 右侧留白：数值+注释画在条形末端外侧，条形区必须留出空间，否则最长的一条会被画布右缘裁掉 */}
-      <div style={{ flex: 1, position: "relative", height: rowH * 0.58, marginRight: 300 }}>
+      <div style={{ flex: 1, position: "relative", height: rowH * 0.58, marginRight: compact ? 150 : 300 }}>
         <div style={{ position: "absolute", inset: 0, background: DS.panel, borderRadius: 10 }} />
         <div
           style={{
@@ -89,7 +90,7 @@ const BarRow: React.FC<{
             left: `calc(${w}% + 22px)`,
             top: "50%",
             transform: "translateY(-50%)",
-            fontSize: 34,
+            fontSize: compact ? 27 : 34,
             fontWeight: 800,
             fontFamily: DS.mono,
             color: emphasised ? c : DS.muted,
@@ -142,6 +143,7 @@ export const BarCompare: React.FC<{
             max={max}
             rowH={rowH}
             delay={8 + i * 7}
+            compact={Boolean(bare)}
             unit={unit}
             decimals={decimals}
           />

@@ -14,7 +14,7 @@
  *   remotion still src/index.ts CoverArt out/cover-16x9.png --props='{...}'
  */
 import React from "react";
-import { AbsoluteFill } from "remotion";
+import { AbsoluteFill, useVideoConfig } from "remotion";
 import ds from "../../../config/design-system.json";
 import { BarCompare, BarItem } from "./charts/BarCompare";
 import { ThresholdGrid, ThresholdCell } from "./charts/ThresholdGrid";
@@ -53,6 +53,18 @@ export const CoverArt: React.FC<CoverArtProps> = ({
   chart,
 }) => {
   const lines = title.split("\n");
+  const { width, height } = useVideoConfig();
+  // 竖版（9:16）左右分栏会把两边都挤扁 —— 改成上下：结论在上，证据在下。
+  // 判据用宽高比而不是具体尺寸，这样 4:3、1:1 之类也能落到正确的那一支。
+  const ratio = width / height;
+  const portrait = ratio < 0.9;          // 9:16 才走上下分栏
+  const narrow = ratio >= 0.9 && ratio < 1.5;  // 4:3 仍是左右，但可用横向空间少得多
+  const pad = portrait ? "150px 90px" : narrow ? "80px 76px" : "96px 110px";
+  // 竖版整幅只放一栏，字号可以大；4:3 左右都要挤，标题必须收下来否则被折成四行。
+  const titleSize = portrait ? 104 : narrow ? 62 : 80;
+  const subSize = portrait ? 40 : narrow ? 27 : 32;
+  const footSize = portrait ? 27 : narrow ? 20 : 23;
+  const eyebrowSize = portrait ? 34 : narrow ? 23 : 28;
   return (
     <AbsoluteFill style={{ background: DS.canvas, fontFamily: DS.sans, color: DS.text }}>
       {/* 顶部品牌渐变条 —— 与片内一致 */}
@@ -74,11 +86,11 @@ export const CoverArt: React.FC<CoverArtProps> = ({
         }}
       />
 
-      <div style={{ display: "flex", height: "100%", padding: "96px 110px", gap: 56 }}>
+      <div style={{ display: "flex", flexDirection: portrait ? "column" : "row", height: "100%", padding: pad, gap: portrait ? 72 : 56 }}>
         {/* 左：结论 */}
         <div
           style={{
-            flex: chart ? "0 0 44%" : "1",
+            flex: chart ? (portrait ? "0 0 42%" : narrow ? "0 0 47%" : "0 0 44%") : "1",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
@@ -87,7 +99,7 @@ export const CoverArt: React.FC<CoverArtProps> = ({
           {eyebrow && (
             <div
               style={{
-                fontSize: 28,
+                fontSize: eyebrowSize,
                 color: DS.accent,
                 fontFamily: DS.mono,
                 letterSpacing: "0.14em",
@@ -97,7 +109,7 @@ export const CoverArt: React.FC<CoverArtProps> = ({
               {eyebrow}
             </div>
           )}
-          <div style={{ fontSize: 80, fontWeight: 900, lineHeight: 1.2, letterSpacing: "-0.035em" }}>
+          <div style={{ fontSize: titleSize, fontWeight: 900, lineHeight: 1.2, letterSpacing: "-0.035em" }}>
             {lines.map((ln, i) => (
               <div key={i}>
                 {highlight && ln.includes(highlight) ? (
@@ -113,12 +125,12 @@ export const CoverArt: React.FC<CoverArtProps> = ({
             ))}
           </div>
           {subtitle && (
-            <div style={{ fontSize: 32, color: DS.muted, marginTop: 28, lineHeight: 1.45 }}>
+            <div style={{ fontSize: subSize, color: DS.muted, marginTop: 26, lineHeight: 1.45 }}>
               {subtitle}
             </div>
           )}
           {footnote && (
-            <div style={{ fontSize: 23, color: DS.muted, fontFamily: DS.mono, marginTop: 32 }}>
+            <div style={{ fontSize: footSize, color: DS.muted, fontFamily: DS.mono, marginTop: 28 }}>
               {footnote}
             </div>
           )}
@@ -147,7 +159,7 @@ export const CoverArt: React.FC<CoverArtProps> = ({
         style={{
           position: "absolute",
           bottom: 46,
-          right: 110,
+          right: portrait ? 84 : 110,
           fontSize: 24,
           color: DS.muted,
           fontFamily: DS.mono,
