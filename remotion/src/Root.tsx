@@ -14,6 +14,9 @@ import { TableSlide, TableCell } from "./compositions/TableSlide";
 import { FormulaSlide, FormulaGroup } from "./compositions/FormulaSlide";
 import { TransitionSlide } from "./compositions/TransitionSlide";
 import { NumberHero } from "./compositions/NumberHero";
+import { BarCompare, BarItem } from "./compositions/charts/BarCompare";
+import { RangeSpan, SpanRow } from "./compositions/charts/RangeSpan";
+import { Scatter, Pt } from "./compositions/charts/Scatter";
 import { CaptionsLayer, CaptionPosition } from "./compositions/CaptionsLayer";
 import { BrandConfig } from "./compositions/BrandedSlideLayout";
 import { Preset, resolvePreset } from "./presets";
@@ -44,7 +47,10 @@ type SlideMeta = {
     | "table"
     | "formula"
     | "transition"
-    | "numberHero";
+    | "numberHero"
+    | "barCompare"
+    | "rangeSpan"
+    | "scatter";
   durationInFrames: number;
   audio?: string;
   captions?: Array<{ from: number; to: number; text: string }>;
@@ -90,6 +96,30 @@ type SlideMeta = {
     footer?: string;
     animateNumbers?: boolean;
   };
+
+  // charts (barCompare / rangeSpan / scatter) — data-visualisation slide types.
+  // Added 2026-08-18: the pipeline previously had no chart primitives at all,
+  // so decks whose gate demanded "~70% real data visualisation" could only ship
+  // text and text-laid-out tables. Declaring one of these types is now the
+  // supported way to satisfy that requirement.
+  chart?: {
+    // barCompare
+    items?: BarItem[];
+    unit?: string;
+    decimals?: number;
+    // rangeSpan
+    rows?: SpanRow[];
+    axisNote?: string;
+    // scatter
+    points?: Pt[];
+    synth?: { n: number; seed: number };
+    synthDisclosure?: string;
+    r?: number;
+    rLabel?: string;
+    xLabel?: string;
+    yLabel?: string;
+  };
+  footnote?: string;
 
   // formula
   formulaGroups?: FormulaGroup[];
@@ -258,6 +288,45 @@ const Main: React.FC<Metadata> = (meta) => {
                 brand={meta.brand}
                 title={slide.title ?? ""}
                 bullets={slide.bullets}
+              />
+            )}
+            {slide.type === "barCompare" && slide.chart?.items && (
+              <BarCompare
+                slideNumber={slideNumber}
+                totalSlides={total}
+                title={slide.title ?? ""}
+                subtitle={slide.subtitle}
+                footnote={slide.footnote}
+                items={slide.chart.items}
+                unit={slide.chart.unit}
+                decimals={slide.chart.decimals}
+              />
+            )}
+            {slide.type === "rangeSpan" && slide.chart?.rows && (
+              <RangeSpan
+                slideNumber={slideNumber}
+                totalSlides={total}
+                title={slide.title ?? ""}
+                subtitle={slide.subtitle}
+                footnote={slide.footnote}
+                rows={slide.chart.rows}
+                axisNote={slide.chart.axisNote}
+              />
+            )}
+            {slide.type === "scatter" && slide.chart?.r !== undefined && (
+              <Scatter
+                slideNumber={slideNumber}
+                totalSlides={total}
+                title={slide.title ?? ""}
+                subtitle={slide.subtitle}
+                footnote={slide.footnote}
+                points={slide.chart.points}
+                synth={slide.chart.synth}
+                synthDisclosure={slide.chart.synthDisclosure}
+                r={slide.chart.r}
+                rLabel={slide.chart.rLabel}
+                xLabel={slide.chart.xLabel}
+                yLabel={slide.chart.yLabel}
               />
             )}
             {slide.type === "numberHero" && slide.heroValue !== undefined && (
