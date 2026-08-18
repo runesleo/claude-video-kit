@@ -31,6 +31,17 @@ case "$ALIGN_MODE" in
     ;;
 esac
 
+# [0/4] 画面构成门 —— 在花钱做 TTS 之前先对一次 gate。
+# 此前 gate 只是 markdown 里的一句话，QA 靠人工判断"哪些算文字卡"，
+# 于是一份要求 70% 数据可视化的片子以 0% 出厂，全程无人报错。
+if [[ -f "$PROJECT/PREPRODUCTION-GATE.md" ]]; then
+  echo "▶ [0/4] 画面构成门"
+  if ! "${PYTHON:-python3}" "$KIT_ROOT/scripts/check_gate.py" "$PROJECT" ${GATE_WARN_ONLY:+--warn}; then
+    echo "   设 GATE_WARN_ONLY=1 可降级为仅告警（需在 RENDER-QA 写明理由）" >&2
+    exit 2
+  fi
+fi
+
 echo "▶ [1/4] TTS (backend: ${TTS_BACKEND:-cosyvoice})"
 PYTHON="${PYTHON:-python3}"
 # 默认 cosyvoice：唯一使用本人克隆音色的后端。其余后端是通用音色，
