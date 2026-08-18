@@ -54,28 +54,33 @@ export const ChartFrame: React.FC<{
   footnote?: string;
   slideNumber?: number;
   totalSlides?: number;
+  /** 裸模式：只画图表主体，不画标题栏/页码/脚注/字幕带。
+      封面用 —— 封面自己有标题排版，图表在那里是证据不是主角。 */
+  bare?: boolean;
   children: React.ReactNode;
-}> = ({ title, subtitle, footnote, slideNumber, totalSlides, children }) => {
+}> = ({ title, subtitle, footnote, slideNumber, totalSlides, bare = false, children }) => {
   const t = useGrow(0);
   return (
     <div
       style={{
         width: "100%",
         height: "100%",
-        background: DS.canvas,
-        padding: `${DS.safeY}px ${DS.safeX}px`,
+        background: bare ? "transparent" : DS.canvas,
+        padding: bare ? 0 : `${DS.safeY}px ${DS.safeX}px`,
         display: "flex",
         flexDirection: "column",
         fontFamily: DS.sans,
         color: DS.text,
       }}
     >
-      <div style={{ opacity: t, transform: `translateY(${interpolate(t, [0, 1], [18, 0])}px)` }}>
-        <div style={{ fontSize: 58, fontWeight: 800, letterSpacing: "-0.03em" }}>{title}</div>
-        {subtitle && (
-          <div style={{ fontSize: 30, color: DS.muted, marginTop: 12 }}>{subtitle}</div>
-        )}
-      </div>
+      {!bare && (
+        <div style={{ opacity: t, transform: `translateY(${interpolate(t, [0, 1], [18, 0])}px)` }}>
+          <div style={{ fontSize: 58, fontWeight: 800, letterSpacing: "-0.03em" }}>{title}</div>
+          {subtitle && (
+            <div style={{ fontSize: 30, color: DS.muted, marginTop: 12 }}>{subtitle}</div>
+          )}
+        </div>
+      )}
 
       {/* CaptionsLayer 覆盖在所有镜之上，其基线距画布底 96px（design-system.layout）。
           文字卡不受影响，但图表会被字幕压住 —— 实测柱状条与散点云都被遮过。
@@ -86,12 +91,13 @@ export const ChartFrame: React.FC<{
           display: "flex",
           alignItems: "center",
           marginTop: 36,
-          paddingBottom: CAPTION_BAND,
+          paddingBottom: bare ? 0 : CAPTION_BAND,
         }}
       >
         {children}
       </div>
 
+      {!bare && (
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
         <div style={{ fontSize: 22, color: DS.muted, fontFamily: DS.mono, maxWidth: 1300 }}>
           {footnote}
@@ -102,6 +108,7 @@ export const ChartFrame: React.FC<{
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };

@@ -78,9 +78,11 @@ export const ThresholdGrid: React.FC<{
   footnote?: string;
   slideNumber?: number;
   totalSlides?: number;
+  /** 裸模式：封面等场景只要图表主体 */
+  bare?: boolean;
   cells: ThresholdCell[];
   verdict?: string;
-}> = ({ title, subtitle, footnote, slideNumber, totalSlides, cells, verdict }) => {
+}> = ({ title, subtitle, footnote, slideNumber, totalSlides, cells, verdict, bare }) => {
   const gVerdict = useGrow(12 + cells.length * 8);
   return (
     <ChartFrame
@@ -89,6 +91,7 @@ export const ThresholdGrid: React.FC<{
       footnote={footnote}
       slideNumber={slideNumber}
       totalSlides={totalSlides}
+      bare={bare}
     >
       <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 40 }}>
         <div style={{ display: "flex", gap: 24 }}>

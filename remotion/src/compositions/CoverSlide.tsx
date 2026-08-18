@@ -9,6 +9,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { LEO_LOGO_DATA_URL } from "./leoLogoData";
+import ds from "../../../config/design-system.json";
 
 interface CoverSlideProps {
   title: string;
@@ -49,7 +50,9 @@ export const CoverSlide: React.FC<CoverSlideProps> = ({
   watermarkUrl = "leolabs.me",
   logoSrc,
   endCard = false,
-  endCardCTAs,
+  // 末镜署名固定取自 design-system.json 的模板锁 —— 不再每条片子手填。
+  // 见该文件 template.$comment：模板定稿后低频变更，默认不动。
+  endCardCTAs = ds.template?.endCard?.ctas,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();

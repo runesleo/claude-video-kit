@@ -116,10 +116,12 @@ export const BarCompare: React.FC<{
   footnote?: string;
   slideNumber?: number;
   totalSlides?: number;
+  /** 裸模式：封面等场景只要图表主体 */
+  bare?: boolean;
   items: BarItem[];
   unit?: string;
   decimals?: number;
-}> = ({ title, subtitle, footnote, slideNumber, totalSlides, items, unit = "", decimals = 1 }) => {
+}> = ({ title, subtitle, footnote, slideNumber, totalSlides, items, unit = "", decimals = 1, bare }) => {
   const max = Math.max(...items.map((i) => i.value), 1);
   const rowH = Math.min(112, 560 / Math.max(items.length, 1));
 
@@ -130,6 +132,7 @@ export const BarCompare: React.FC<{
       footnote={footnote}
       slideNumber={slideNumber}
       totalSlides={totalSlides}
+      bare={bare}
     >
       <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 18 }}>
         {items.map((it, i) => (
