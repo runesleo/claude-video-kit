@@ -1,66 +1,53 @@
 # Pre-render review gate
 
-> Convention, not code — but the highest-leverage 5 minutes in the pipeline.
+> The canonical implementation is the script-bound `video-explainer` review receipt. This file explains why the gate exists; it is no longer merely a convention.
 
 ## Why
 
-The v0.1 pipeline turns `script.json` into `out/full.mp4` in roughly 30
-minutes (TTS + Whisper align + Remotion render). Every factual error caught
-*after* render costs another 30 minutes to fix — plus re-running
-`build-distribute-pack` and re-uploading 4 platform packages.
+The pipeline turns `script.json` into a rendered video through TTS, alignment, and Remotion. Errors caught after render cost a full re-render plus another distribution-pack cycle. Errors caught before TTS are cheap.
 
-Every error caught *before* TTS costs zero re-render time.
+A second problem is subtler: a script can be factually correct and technically renderable while still producing a frame that feels wrong — weak hierarchy, unnecessary decoration, poor phone-size readability, inconsistent spacing, or noisy motion. Those defects need explicit criteria rather than model taste.
 
-## The gate
+## Canonical gate
 
-Before you run `scripts/render.sh`, hand the final `script.json` to a second
-model (not the one that wrote it) and ask it to look for:
+Before `scripts/render.sh` can run through the guarded entrypoint, a reviewer distinct from the script author must review the exact `script.json` bytes and pass all eleven checks:
 
-1. **Factual claims** — numbers, dates, names, API behavior. Anything that
-   could be wrong in a way the author's eye would skip.
-2. **Terminology drift** — a term used two different ways across slides.
-3. **Narrative gaps** — a slide whose `voice_text` assumes knowledge the
-   previous slide didn't establish.
-4. **Compliance landmines** — for China-distribution (Bilibili / Douyin /
-   Xiaohongshu) channels, flag words that will get the upload throttled.
-5. **Brand-safety own-goals** — over-aggressive sanitization that strips
-   discoverability (removing a product name from a video *about* that product).
+1. **facts** — numbers, dates, names, API behavior, and other factual claims.
+2. **structure** — hook, explanation, transitions, and close are coherent.
+3. **duration** — narration fits the target duration.
+4. **visual_feasibility** — every planned scene maps to a supported composition and the existing design system.
+5. **hierarchy** — each frame has one clear primary read.
+6. **simplicity** — no element exists without an information, evidence, navigation, or brand job.
+7. **clarity** — scale, spacing, position, labels, and contrast establish the reading order.
+8. **legibility** — text and evidence remain readable at actual phone viewing size.
+9. **craft** — alignment, spacing rhythm, typography, components, charts, transitions, and motion are internally consistent.
+10. **privacy** — no private, identifying, credential, or unauthorized material.
+11. **copyright** — media and copy are owned, licensed, or otherwise permitted.
 
-Any model works. The only rule: **not the model that wrote the script**.
+Run:
 
-## Example prompt
-
-```
-Review this video script for a short-form video that will go to
-Bilibili / YouTube / Xiaohongshu / Douyin. Flag:
-
-1. Factual errors (numbers, dates, names, API behavior)
-2. Terminology used inconsistently across slides
-3. Narrative gaps (a slide assuming something never established)
-4. Compliance-sensitive words for China platforms
-5. Over-sanitization that would hurt discoverability
-
-Do not rewrite. Just list issues with slide index and a one-line fix suggestion.
-
-<paste script.json>
+```bash
+node scripts/video-explainer.mjs review <project> --input <project>/review-input.json
 ```
 
-## When to skip
+Any `fix` or `block` stops rendering. Any edit to `script.json` invalidates the receipt.
 
-- You're iterating on a single slide's style, not changing voice content
-- The script is 3 slides or fewer **and** has no numeric claims, factual
-  assertions, or platform-sensitive terms (if any of those are present, size
-  doesn't save you — run the gate anyway)
-- You've already reviewed this exact script within the last hour
+The five design-quality checks are informed by Apple platform design guidance as a quality lens, not a visual style target: https://developer.apple.com/design/
 
-## When it pays off most
+They do **not** authorize changes to `config/design-system.json`, one-off colors, new font stacks, or Apple-like styling. The existing brand system remains authoritative.
 
-- 10+ slide videos with numeric claims
-- Scripts generated from a research doc (high risk of drift)
-- First time publishing a video on a new topic / vertical
-- Anything that will run on multiple platforms (one fix vs. four uploads)
+## Why pre-render review is not enough
 
----
+Some defects only exist in the actual MP4: visual centering can feel wrong after animation, captions can collide at real speed, transitions can become noisy, and chapter-level audio can jump even when the script is fine.
 
-This is a convention, not an automated gate. If you want to automate it,
-`scripts/render.sh` is the place to add a `--review-with <model>` flag.
+After render, run objective verification and then the separate, video-bound rendered-output review documented in `skills/video-explainer/references/review-gate.md`.
+
+The rendered-output gate rechecks hierarchy, simplicity, clarity, legibility, and craft on the moving image, plus separate `audio_consistency` and `end_card` checks. The audio check is deliberately separate from design quality because the current verifier does not yet automate chapter-level LUFS consistency.
+
+## When the gate pays off most
+
+- 10+ slide videos with numeric claims.
+- Scripts generated from research documents where terminology can drift.
+- First-time topics or new visual compositions.
+- Multi-platform videos where one mistake multiplies across uploads.
+- Any artifact where the first reaction is “nothing is obviously broken, but it looks wrong.”
