@@ -9,6 +9,8 @@ All notable local release-candidate changes are recorded here. A version entry d
 - Add `review-render`, an independent rendered-output review bound to the exact MP4 SHA-256 so a script pass cannot stand in for actual visual acceptance.
 - Recheck the five design-quality dimensions on the moving image and keep `audio_consistency` plus platform-correct `end_card` as separate post-render checks.
 - Reject legacy six-check receipts instead of silently grandfathering them through the stronger gate.
+- Add a machine-checked `motion-storyboard.json` production gate before TTS/render so information purpose, visual metaphor, and motion grammar are designed before slide implementation.
+- Block card-stack-by-default planning, excessive generic entrance/exit motion, and unexplained 3D usage while retaining an explicit demo-quality exception.
 - Keep the neutral demo honest: it can prove pre-render review, render, and objective verification locally, but it cannot self-approve rendered-output quality.
 
 ## 0.3.0-rc.1 — 2026-07-22

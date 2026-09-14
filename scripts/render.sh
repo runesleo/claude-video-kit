@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 # asset-version: v0.3.0-rc.1
-# updated: 2026-07-22
+# updated: 2026-09-14
 # owner_surface: claude-video-kit / video-explainer rendering
-# behavior_change: add an explicit script-timed caption mode for the no-key canonical demo
-# rollback: remove VIDEO_EXPLAINER_ALIGN_MODE handling and restore best-effort Whisper alignment
+# behavior_change: require a machine-checked motion storyboard before production TTS/render; retain a demo-quality exception
+# rollback: remove the motion-storyboard block below and restore the 2026-07-22 render entrypoint
 # render.sh — end-to-end pipeline: script.json → out/full.mp4
 #
 # Usage: ./scripts/render.sh <project_dir>
 #
 # Stages:
-#   1. TTS        → workspace/*.wav
-#   2. Align      → workspace/captions.json
-#   3. Metadata   → metadata.json
-#   4. Remotion   → out/full.mp4
+#   0a. Motion storyboard gate
+#   0b. Preproduction visual-composition gate
+#   1.  TTS        → workspace/*.wav
+#   2.  Align      → workspace/captions.json
+#   3.  Metadata   → metadata.json
+#   4.  Remotion   → out/full.mp4
 set -euo pipefail
 
 PROJECT="${1:-}"
@@ -31,11 +33,26 @@ case "$ALIGN_MODE" in
     ;;
 esac
 
-# [0/4] 画面构成门 —— 在花钱做 TTS 之前先对一次 gate。
+# [0a/4] Motion storyboard gate — information movement must be designed before TTS.
+# The script-alignment path is the explicit demo-quality path used by the canonical no-key demo;
+# it may omit a storyboard, but such output is already non-publication-quality by contract.
+STORYBOARD="$PROJECT/motion-storyboard.json"
+if [[ -f "$STORYBOARD" ]]; then
+  echo "▶ [0a/4] Motion storyboard gate"
+  "${PYTHON:-python3}" "$KIT_ROOT/scripts/check_storyboard.py" "$PROJECT"
+elif [[ "$ALIGN_MODE" == "script" ]]; then
+  echo "⚠️  [0a/4] motion-storyboard.json missing — allowed only on demo-quality script-alignment path" >&2
+else
+  echo "❌ [0a/4] motion-storyboard.json missing — production render requires motion-first preproduction" >&2
+  echo "   See skills/video-explainer/references/motion-storyboard.md" >&2
+  exit 2
+fi
+
+# [0b/4] 画面构成门 —— 在花钱做 TTS 之前先对一次 gate。
 # 此前 gate 只是 markdown 里的一句话，QA 靠人工判断"哪些算文字卡"，
 # 于是一份要求 70% 数据可视化的片子以 0% 出厂，全程无人报错。
 if [[ -f "$PROJECT/PREPRODUCTION-GATE.md" ]]; then
-  echo "▶ [0/4] 画面构成门"
+  echo "▶ [0b/4] 画面构成门"
   if ! "${PYTHON:-python3}" "$KIT_ROOT/scripts/check_gate.py" "$PROJECT" ${GATE_WARN_ONLY:+--warn}; then
     echo "   设 GATE_WARN_ONLY=1 可降级为仅告警（需在 RENDER-QA 写明理由）" >&2
     exit 2
