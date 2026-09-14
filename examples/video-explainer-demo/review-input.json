@@ -8,7 +8,7 @@
     },
     "structure": {
       "status": "pass",
-      "notes": "Problem, six checks, stop condition, pass path, and result are explicit."
+      "notes": "Problem, review gates, stop condition, pass path, and result are explicit."
     },
     "duration": {
       "status": "pass",
@@ -16,7 +16,27 @@
     },
     "visual_feasibility": {
       "status": "pass",
-      "notes": "Every slide uses the existing cover, text, or code composition."
+      "notes": "Every slide uses an existing composition and canonical design tokens."
+    },
+    "hierarchy": {
+      "status": "pass",
+      "notes": "Each slide has one obvious primary message and no competing focal point."
+    },
+    "simplicity": {
+      "status": "pass",
+      "notes": "No decorative element is required to understand the demo."
+    },
+    "clarity": {
+      "status": "pass",
+      "notes": "Type scale, spacing, labels, and contrast communicate the intended reading order."
+    },
+    "legibility": {
+      "status": "pass",
+      "notes": "The planned text volume fits the supported mobile-first compositions without relying on desktop-scale viewing."
+    },
+    "craft": {
+      "status": "pass",
+      "notes": "The script stays within the existing component, spacing, type, color, and motion system."
     },
     "privacy": {
       "status": "pass",
