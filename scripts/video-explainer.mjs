@@ -2,10 +2,10 @@
 /**
  * video-explainer — guarded entrypoint for the reviewed vertical-video flow.
  *
- * asset-version: v0.3.0-rc.1 / 2026-07-22 / add script-bound review receipts
+ * asset-version: v0.3.0-rc.1 / 2026-09-14 / add design-quality and rendered-output review gates
  * owner_surface: claude-video-kit / T0580 / video-explainer Agent Skill
- * behavior_change: rendering may proceed only with a current, independent pass receipt
- * rollback: remove this entrypoint and the video-explainer skill; legacy render.sh remains available
+ * behavior_change: rendering requires eleven current pre-render checks; publication-quality acceptance also requires an independent review bound to the exact rendered video bytes
+ * rollback: revert the 2026-09-14 review-gate change; legacy render.sh remains available
  */
 
 import { createHash } from 'node:crypto'
@@ -17,16 +17,44 @@ import { fileURLToPath } from 'node:url'
 
 const KIT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
+export const DESIGN_QUALITY_CHECKS = [
+  'hierarchy',
+  'simplicity',
+  'clarity',
+  'legibility',
+  'craft',
+]
+
 export const REQUIRED_REVIEW_CHECKS = [
   'facts',
   'structure',
   'duration',
   'visual_feasibility',
+  ...DESIGN_QUALITY_CHECKS,
   'privacy',
   'copyright',
 ]
 
+export const REQUIRED_RENDER_REVIEW_CHECKS = [
+  ...DESIGN_QUALITY_CHECKS,
+  'audio_consistency',
+  'end_card',
+]
+
 const REVIEW_STATES = new Set(['pass', 'fix', 'block'])
+
+function aggregateReviewStatus(checks, required) {
+  const states = required.map((name) => checks[name].status)
+  return states.includes('block') ? 'block' : states.includes('fix') ? 'fix' : 'pass'
+}
+
+function validateRequiredChecks(checks, required, label = 'review check') {
+  for (const name of required) {
+    if (!REVIEW_STATES.has(checks[name]?.status)) {
+      throw new Error(`${label} ${name} must be pass, fix, or block`)
+    }
+  }
+}
 
 export function evaluateDoctor(observations) {
   const required = ['node', 'python', 'ffmpeg', 'ffprobe', 'remotion', 'outputWritable']
@@ -119,10 +147,13 @@ export async function collectDoctorObservations(outputDir = resolve(KIT_ROOT, 'o
   }
 }
 
-async function scriptDigest(projectDir) {
-  const scriptPath = resolve(projectDir, 'script.json')
-  const body = await readFile(scriptPath)
+async function fileDigest(path) {
+  const body = await readFile(path)
   return createHash('sha256').update(body).digest('hex')
+}
+
+async function scriptDigest(projectDir) {
+  return fileDigest(resolve(projectDir, 'script.json'))
 }
 
 export async function createReviewReceipt(projectDir, review) {
@@ -133,28 +164,22 @@ export async function createReviewReceipt(projectDir, review) {
   }
 
   const checks = review?.checks || {}
-  for (const name of REQUIRED_REVIEW_CHECKS) {
-    if (!REVIEW_STATES.has(checks[name]?.status)) {
-      throw new Error(`review check ${name} must be pass, fix, or block`)
-    }
-  }
-  const states = REQUIRED_REVIEW_CHECKS.map((name) => checks[name].status)
-  const status = states.includes('block') ? 'block' : states.includes('fix') ? 'fix' : 'pass'
+  validateRequiredChecks(checks, REQUIRED_REVIEW_CHECKS)
 
   return {
-    schema: 'video-explainer-review/v1',
+    schema: 'video-explainer-review/v2',
     created_at: new Date().toISOString(),
     script_sha256: await scriptDigest(projectDir),
     author,
     reviewer,
-    status,
+    status: aggregateReviewStatus(checks, REQUIRED_REVIEW_CHECKS),
     checks,
   }
 }
 
 export async function validateReviewReceipt(projectDir, receipt) {
-  if (!receipt || receipt.schema !== 'video-explainer-review/v1') {
-    return { ok: false, reason: 'review receipt missing or unsupported' }
+  if (!receipt || receipt.schema !== 'video-explainer-review/v2') {
+    return { ok: false, reason: 'review receipt missing or unsupported; rerun the current eleven-check review' }
   }
   if (!receipt.author || !receipt.reviewer || receipt.author === receipt.reviewer) {
     return { ok: false, reason: 'review receipt has no independent reviewer' }
@@ -170,7 +195,49 @@ export async function validateReviewReceipt(projectDir, receipt) {
   if (receipt.script_sha256 !== await scriptDigest(projectDir)) {
     return { ok: false, reason: 'script changed after review' }
   }
-  return { ok: true, reason: 'current pass receipt' }
+  return { ok: true, reason: 'current eleven-check pass receipt' }
+}
+
+export async function createRenderedReviewReceipt(videoPath, review) {
+  const producer = String(review?.producer || '').trim()
+  const reviewer = String(review?.reviewer || '').trim()
+  if (!producer || !reviewer || producer === reviewer) {
+    throw new Error('rendered-output review requires an independent reviewer distinct from the video producer')
+  }
+
+  const checks = review?.checks || {}
+  validateRequiredChecks(checks, REQUIRED_RENDER_REVIEW_CHECKS, 'rendered-output check')
+
+  return {
+    schema: 'video-explainer-render-review/v1',
+    created_at: new Date().toISOString(),
+    video_sha256: await fileDigest(resolve(videoPath)),
+    producer,
+    reviewer,
+    status: aggregateReviewStatus(checks, REQUIRED_RENDER_REVIEW_CHECKS),
+    checks,
+  }
+}
+
+export async function validateRenderedReviewReceipt(videoPath, receipt) {
+  if (!receipt || receipt.schema !== 'video-explainer-render-review/v1') {
+    return { ok: false, reason: 'rendered-output review receipt missing or unsupported' }
+  }
+  if (!receipt.producer || !receipt.reviewer || receipt.producer === receipt.reviewer) {
+    return { ok: false, reason: 'rendered-output review has no independent reviewer' }
+  }
+  for (const name of REQUIRED_RENDER_REVIEW_CHECKS) {
+    if (!REVIEW_STATES.has(receipt.checks?.[name]?.status)) {
+      return { ok: false, reason: `rendered-output review is missing ${name}` }
+    }
+  }
+  if (receipt.status !== 'pass') {
+    return { ok: false, reason: `rendered-output review status is ${receipt.status}` }
+  }
+  if (receipt.video_sha256 !== await fileDigest(resolve(videoPath))) {
+    return { ok: false, reason: 'video changed after rendered-output review' }
+  }
+  return { ok: true, reason: 'current rendered-output pass receipt' }
 }
 
 export async function runGuardedRender(projectDir, options = {}) {
@@ -274,6 +341,20 @@ async function cli(args) {
     return
   }
 
+  if (command === 'review-render') {
+    if (!projectArg) throw new Error('usage: video-explainer review-render <video.mp4> --input <render-review-input.json> [--output <receipt.json>]')
+    const inputPath = optionValue(args, '--input')
+    if (!inputPath) throw new Error('review-render requires --input <render-review-input.json>')
+    const review = JSON.parse(await readFile(resolve(inputPath), 'utf8'))
+    const receipt = await createRenderedReviewReceipt(projectArg, review)
+    const receiptPath = resolve(optionValue(args, '--output') || resolve(dirname(resolve(projectArg)), 'render-review-result.json'))
+    await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`)
+    console.log(`rendered-output review gate: ${receipt.status}`)
+    console.log(`receipt: ${receiptPath}`)
+    if (receipt.status !== 'pass') process.exitCode = 2
+    return
+  }
+
   if (command === 'demo') {
     const stamp = new Date().toISOString().replace(/[:.]/g, '-')
     const output = resolve(optionValue(args, '--output') || resolve(KIT_ROOT, `out/video-explainer-demo-${stamp}`))
@@ -305,16 +386,18 @@ async function cli(args) {
       created_at: new Date().toISOString(),
       demo_quality_voice: doctor?.ttsMode === 'say-demo',
       review_status: receipt.status,
+      rendered_output_review_status: 'not_run_demo_only',
       script_sha256: receipt.script_sha256,
       video,
       verification: verification.trim(),
     }, null, 2)}\n`)
     console.log(verification.trim())
+    console.log('rendered-output review: NOT RUN (demo-only result; not publication-quality acceptance)')
     console.log(`result: ${resultPath}`)
     return
   }
 
-  throw new Error('usage: video-explainer <doctor|review|render|demo> ...')
+  throw new Error('usage: video-explainer <doctor|review|render|review-render|demo> ...')
 }
 
 async function runVerification(videoPath, metadataPath) {

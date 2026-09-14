@@ -8,10 +8,12 @@ import { pathToFileURL } from 'node:url'
 
 import {
   collectDoctorObservations,
+  createRenderedReviewReceipt,
   createReviewReceipt,
   evaluateDoctor,
   prepareDemoProject,
   runGuardedRender,
+  validateRenderedReviewReceipt,
   validateReviewReceipt,
 } from '../scripts/video-explainer.mjs'
 
@@ -20,8 +22,23 @@ const passingChecks = {
   structure: { status: 'pass', notes: 'Hook, explanation, and close are present.' },
   duration: { status: 'pass', notes: 'Target is under 30 seconds.' },
   visual_feasibility: { status: 'pass', notes: 'Every slide maps to a supported composition.' },
+  hierarchy: { status: 'pass', notes: 'Each frame has one obvious primary message.' },
+  simplicity: { status: 'pass', notes: 'No unnecessary decorative elements.' },
+  clarity: { status: 'pass', notes: 'Scale, spacing, contrast, and labels establish reading order.' },
+  legibility: { status: 'pass', notes: 'Text remains readable at phone viewing size.' },
+  craft: { status: 'pass', notes: 'Alignment, spacing, components, and motion are consistent.' },
   privacy: { status: 'pass', notes: 'No personal data or credentials.' },
   copyright: { status: 'pass', notes: 'Repository-owned text and shapes only.' },
+}
+
+const passingRenderChecks = {
+  hierarchy: { status: 'pass', notes: 'Primary focus survives the actual render.' },
+  simplicity: { status: 'pass', notes: 'No rendered element creates unnecessary visual load.' },
+  clarity: { status: 'pass', notes: 'Reading order remains clear in motion.' },
+  legibility: { status: 'pass', notes: 'Phone-size playback remains readable.' },
+  craft: { status: 'pass', notes: 'Alignment, animation, and visual rhythm are polished.' },
+  audio_consistency: { status: 'pass', notes: 'No chapter-level loudness or pacing jump.' },
+  end_card: { status: 'pass', notes: 'The correct end card is present and unobscured.' },
 }
 
 function runCommand(command, args, options = {}) {
@@ -51,6 +68,7 @@ test('review receipt is bound to the exact script and requires an independent re
     reviewer: 'review-agent',
     checks: passingChecks,
   })
+  assert.equal(receipt.schema, 'video-explainer-review/v2')
   assert.equal(receipt.status, 'pass')
   assert.equal((await validateReviewReceipt(project, receipt)).ok, true)
 
@@ -67,6 +85,71 @@ test('review receipt is bound to the exact script and requires an independent re
       author: 'same-agent',
       reviewer: 'same-agent',
       checks: passingChecks,
+    }),
+    /independent reviewer/i,
+  )
+})
+
+test('legacy six-check reviews cannot silently bypass the new design-quality gate', async () => {
+  const project = await mkdtemp(join(tmpdir(), 'video-explainer-design-gate-'))
+  await writeFile(join(project, 'script.json'), JSON.stringify({
+    title: 'Design gate', slides: [{ type: 'cover', title: 'One focal point' }],
+  }))
+  const legacyChecks = {
+    facts: passingChecks.facts,
+    structure: passingChecks.structure,
+    duration: passingChecks.duration,
+    visual_feasibility: passingChecks.visual_feasibility,
+    privacy: passingChecks.privacy,
+    copyright: passingChecks.copyright,
+  }
+  await assert.rejects(
+    () => createReviewReceipt(project, {
+      author: 'writer-agent', reviewer: 'review-agent', checks: legacyChecks,
+    }),
+    /hierarchy.*pass, fix, or block/i,
+  )
+  const legacyReceipt = {
+    schema: 'video-explainer-review/v1',
+    author: 'writer-agent',
+    reviewer: 'review-agent',
+    status: 'pass',
+    script_sha256: 'legacy',
+    checks: legacyChecks,
+  }
+  const result = await validateReviewReceipt(project, legacyReceipt)
+  assert.equal(result.ok, false)
+  assert.match(result.reason, /eleven-check review/i)
+})
+
+test('rendered-output review is video-bound, independent, and includes audio/end-card QA', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'video-explainer-render-review-'))
+  const video = join(root, 'full.mp4')
+  await writeFile(video, 'render-v1')
+
+  const receipt = await createRenderedReviewReceipt(video, {
+    producer: 'render-agent', reviewer: 'independent-reviewer', checks: passingRenderChecks,
+  })
+  assert.equal(receipt.schema, 'video-explainer-render-review/v1')
+  assert.equal(receipt.status, 'pass')
+  assert.equal((await validateRenderedReviewReceipt(video, receipt)).ok, true)
+
+  const fixChecks = structuredClone(passingRenderChecks)
+  fixChecks.audio_consistency = { status: 'fix', notes: 'Chapter 3 is visibly louder than chapter 2.' }
+  const fixReceipt = await createRenderedReviewReceipt(video, {
+    producer: 'render-agent', reviewer: 'independent-reviewer', checks: fixChecks,
+  })
+  assert.equal(fixReceipt.status, 'fix')
+  assert.equal((await validateRenderedReviewReceipt(video, fixReceipt)).ok, false)
+
+  await writeFile(video, 'render-v2')
+  const stale = await validateRenderedReviewReceipt(video, receipt)
+  assert.equal(stale.ok, false)
+  assert.match(stale.reason, /video changed/i)
+
+  await assert.rejects(
+    () => createRenderedReviewReceipt(video, {
+      producer: 'same-agent', reviewer: 'same-agent', checks: passingRenderChecks,
     }),
     /independent reviewer/i,
   )
@@ -183,6 +266,23 @@ test('CLI writes a pass receipt and dry-run render validates it without launchin
   assert.match(dryRun.stdout, /review gate: pass/i)
 })
 
+test('CLI writes a video-bound rendered-output review receipt', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'video-explainer-review-render-cli-'))
+  const video = join(root, 'full.mp4')
+  const input = join(root, 'render-review-input.json')
+  await writeFile(video, 'synthetic reviewed render')
+  await writeFile(input, JSON.stringify({
+    producer: 'render-agent', reviewer: 'independent-render-reviewer', checks: passingRenderChecks,
+  }))
+
+  const cli = join(process.cwd(), 'scripts/video-explainer.mjs')
+  const reviewed = await runNode([cli, 'review-render', video, '--input', input])
+  assert.equal(reviewed.code, 0, reviewed.stderr)
+  assert.match(reviewed.stdout, /rendered-output review gate: pass/i)
+  const receipt = JSON.parse(await readFile(join(root, 'render-review-result.json'), 'utf8'))
+  assert.equal((await validateRenderedReviewReceipt(video, receipt)).ok, true)
+})
+
 test('doctor CLI is read-only, machine-readable, and reports the supported local demo path', async () => {
   const cli = join(process.cwd(), 'scripts/video-explainer.mjs')
   const output = await mkdtemp(join(tmpdir(), 'video-explainer-doctor-'))
@@ -234,6 +334,7 @@ test('video-explainer is a discoverable, concise skill with on-demand references
   assert.match(skill, /^---\nname: video-explainer\ndescription: .+\n---/)
   assert.doesNotMatch(skill, /TODO|\/Users\/zhangxu|runes_leo|leolabs/i)
   assert.match(skill, /npx skills add runesleo\/claude-video-kit --skill video-explainer/)
+  assert.match(skill, /review-render/)
   for (const name of [
     'setup-and-doctor.md',
     'brief-to-script.md',
@@ -258,6 +359,7 @@ test('release-candidate version, commands, changelog, and bilingual entrypoints 
   const changelog = await readFile(join(process.cwd(), 'CHANGELOG.md'), 'utf8')
   assert.match(changelog, /0\.3\.0-rc\.1/)
   assert.match(changelog, /video-explainer/)
+  assert.match(changelog, /design-quality/i)
   for (const readme of ['README.md', 'README.zh.md']) {
     const body = await readFile(join(process.cwd(), readme), 'utf8')
     assert.match(body, /npx skills add runesleo\/claude-video-kit --skill video-explainer/)
