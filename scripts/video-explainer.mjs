@@ -36,7 +36,12 @@ export const REQUIRED_REVIEW_CHECKS = [
 ]
 
 export const REQUIRED_RENDER_REVIEW_CHECKS = [
+  'facts',
+  'structure',
+  'duration',
   ...DESIGN_QUALITY_CHECKS,
+  'privacy',
+  'copyright',
   'audio_consistency',
   'end_card',
 ]
@@ -209,9 +214,10 @@ export async function createRenderedReviewReceipt(videoPath, review) {
   validateRequiredChecks(checks, REQUIRED_RENDER_REVIEW_CHECKS, 'rendered-output check')
 
   return {
-    schema: 'video-explainer-render-review/v1',
+    schema: 'video-explainer-render-review/v2',
     created_at: new Date().toISOString(),
     video_sha256: await fileDigest(resolve(videoPath)),
+    production_strategy: String(review?.production_strategy || 'unknown').trim() || 'unknown',
     producer,
     reviewer,
     status: aggregateReviewStatus(checks, REQUIRED_RENDER_REVIEW_CHECKS),
@@ -220,8 +226,8 @@ export async function createRenderedReviewReceipt(videoPath, review) {
 }
 
 export async function validateRenderedReviewReceipt(videoPath, receipt) {
-  if (!receipt || receipt.schema !== 'video-explainer-render-review/v1') {
-    return { ok: false, reason: 'rendered-output review receipt missing or unsupported' }
+  if (!receipt || receipt.schema !== 'video-explainer-render-review/v2') {
+    return { ok: false, reason: 'rendered-output review receipt missing or unsupported; rerun the current final-artifact review' }
   }
   if (!receipt.producer || !receipt.reviewer || receipt.producer === receipt.reviewer) {
     return { ok: false, reason: 'rendered-output review has no independent reviewer' }
