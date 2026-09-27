@@ -32,11 +32,16 @@ const passingChecks = {
 }
 
 const passingRenderChecks = {
+  facts: { status: 'pass', notes: 'Claims visible or audible in the final artifact are supported.' },
+  structure: { status: 'pass', notes: 'The final artifact preserves a coherent hook, explanation, and close.' },
+  duration: { status: 'pass', notes: 'The final artifact fits the intended short-video duration.' },
   hierarchy: { status: 'pass', notes: 'Primary focus survives the actual render.' },
   simplicity: { status: 'pass', notes: 'No rendered element creates unnecessary visual load.' },
   clarity: { status: 'pass', notes: 'Reading order remains clear in motion.' },
   legibility: { status: 'pass', notes: 'Phone-size playback remains readable.' },
   craft: { status: 'pass', notes: 'Alignment, animation, and visual rhythm are polished.' },
+  privacy: { status: 'pass', notes: 'The final artifact exposes no personal data or credentials.' },
+  copyright: { status: 'pass', notes: 'The final artifact uses permitted source material.' },
   audio_consistency: { status: 'pass', notes: 'No chapter-level loudness or pacing jump.' },
   end_card: { status: 'pass', notes: 'The correct end card is present and unobscured.' },
 }
@@ -122,25 +127,49 @@ test('legacy six-check reviews cannot silently bypass the new design-quality gat
   assert.match(result.reason, /eleven-check review/i)
 })
 
-test('rendered-output review is video-bound, independent, and includes audio/end-card QA', async () => {
+test('final-artifact review accepts direct output without legacy intermediates and keeps evidence gates', async () => {
   const root = await mkdtemp(join(tmpdir(), 'video-explainer-render-review-'))
   const video = join(root, 'full.mp4')
   await writeFile(video, 'render-v1')
 
   const receipt = await createRenderedReviewReceipt(video, {
-    producer: 'render-agent', reviewer: 'independent-reviewer', checks: passingRenderChecks,
+    production_strategy: 'direct_artifact',
+    producer: 'render-agent',
+    reviewer: 'independent-reviewer',
+    checks: passingRenderChecks,
   })
-  assert.equal(receipt.schema, 'video-explainer-render-review/v1')
+  assert.equal(receipt.schema, 'video-explainer-render-review/v2')
+  assert.equal(receipt.production_strategy, 'direct_artifact')
   assert.equal(receipt.status, 'pass')
   assert.equal((await validateRenderedReviewReceipt(video, receipt)).ok, true)
+
+  const missingFacts = structuredClone(passingRenderChecks)
+  delete missingFacts.facts
+  await assert.rejects(
+    () => createRenderedReviewReceipt(video, {
+      production_strategy: 'direct_artifact',
+      producer: 'render-agent',
+      reviewer: 'independent-reviewer',
+      checks: missingFacts,
+    }),
+    /facts.*pass, fix, or block/i,
+  )
 
   const fixChecks = structuredClone(passingRenderChecks)
   fixChecks.audio_consistency = { status: 'fix', notes: 'Chapter 3 is visibly louder than chapter 2.' }
   const fixReceipt = await createRenderedReviewReceipt(video, {
-    producer: 'render-agent', reviewer: 'independent-reviewer', checks: fixChecks,
+    production_strategy: 'agent_orchestrated',
+    producer: 'render-agent',
+    reviewer: 'independent-reviewer',
+    checks: fixChecks,
   })
   assert.equal(fixReceipt.status, 'fix')
   assert.equal((await validateRenderedReviewReceipt(video, fixReceipt)).ok, false)
+
+  const legacyReceipt = { ...receipt, schema: 'video-explainer-render-review/v1' }
+  const legacy = await validateRenderedReviewReceipt(video, legacyReceipt)
+  assert.equal(legacy.ok, false)
+  assert.match(legacy.reason, /current final-artifact review/i)
 
   await writeFile(video, 'render-v2')
   const stale = await validateRenderedReviewReceipt(video, receipt)
@@ -280,6 +309,7 @@ test('CLI writes a video-bound rendered-output review receipt', async () => {
   assert.equal(reviewed.code, 0, reviewed.stderr)
   assert.match(reviewed.stdout, /rendered-output review gate: pass/i)
   const receipt = JSON.parse(await readFile(join(root, 'render-review-result.json'), 'utf8'))
+  assert.equal(receipt.schema, 'video-explainer-render-review/v2')
   assert.equal((await validateRenderedReviewReceipt(video, receipt)).ok, true)
 })
 
