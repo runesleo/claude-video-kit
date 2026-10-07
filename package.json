@@ -4,14 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.mjs",
+    "test": "npm run test:node && npm run test:release-gate",
+    "test:node": "node --test tests/*.test.mjs",
+    "test:release-gate": "python3 -m unittest discover -s tests -p 'test_*.py' -v",
     "check": "npm test && npm run check:shell && npm run check:python && npm run check:remotion",
     "check:shell": "bash -n scripts/render.sh scripts/prepend-cover.sh",
     "check:python": "PYTHONPYCACHEPREFIX=/tmp/claude-video-kit-pycache python3 -m compileall -q scripts",
     "check:remotion": "cd remotion && npx tsc --noEmit",
     "doctor": "node scripts/video-explainer.mjs doctor",
     "demo": "node scripts/video-explainer.mjs demo",
-    "verify": "node scripts/verify-shorts.mjs"
+    "verify": "node scripts/verify-shorts.mjs",
+    "release-gate": "python3 scripts/video_release_gate.py"
   },
   "engines": {
     "node": ">=20"

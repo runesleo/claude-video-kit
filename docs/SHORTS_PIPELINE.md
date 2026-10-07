@@ -368,6 +368,13 @@ preset: "long"    →  1920×1080 / 30fps / fontScale=0.9 / max 7200s（Phase 3 
 
 ## Step 6 · 分发包 + 网盘上传（定稿后强制）
 
+进入任何交付前，先按 [RELEASE_GATE.md](./RELEASE_GATE.md) 对所有后期修改完成的
+最终 MP4 和平台封面完成独立终审、三份 hash-bound QA 与 `evaluate`。
+`build-distribute-pack.mjs` 必须携带 `--platform`、`--video`、`--cover`、
+`--release-receipt`，会在写出前自动 `verify`。下文再生封面或修改媒体后旧 receipt
+失效，必须重新审阅/evaluate；实际网盘或平台上传/排期前还须立即复验并取得授权。
+本仓库仅生成本地交付包，不执行下文的外部账号操作。
+
 视频本体定稿（Leo 验收 OK）后**必须立即做**这一步，禁拖延、禁跳：
 
 ### 6.1 同步 3 平台 metadata

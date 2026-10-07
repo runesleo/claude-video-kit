@@ -116,7 +116,9 @@ For repository development, run commands from the repository root.
 
    If any final-artifact check is `fix` or `block`, revise or regenerate. A changed MP4 invalidates the receipt.
 
-8. Report the chosen production strategy, video path, objective verification result, final-artifact review receipt, elapsed time, and known limitations. For `legacy_remotion`, also report storyboard validation and the pre-render receipt. A local pass is evidence for the artifact, not publication approval.
+8. Before any distribution handoff, finish all cover/subtitle/audio edits and follow the repository's [final release gate](../../docs/RELEASE_GATE.md): `python3 scripts/video_release_gate.py evaluate`, then `verify` on the final master. Require the platform's independent `video_final_review.v1`, three hash-bound QA docs, current quality profile, and objective audio/cover checks. Keep the Step 7 final-artifact review; it cannot substitute for the platform release receipt. `build-distribute-pack` verifies that receipt before writing any handoff. Downstream publishers must verify again immediately before an authorized upload/schedule action.
+
+9. Report the chosen production strategy, video path, objective verification result, final-artifact review receipt, release-gate status (or explicitly not run), elapsed time, and known limitations. For `legacy_remotion`, also report storyboard validation and the pre-render receipt. A local pass is evidence for the artifact, not publication approval.
 
 ## Fallback rule
 
@@ -140,6 +142,7 @@ The demo exercises the deterministic fallback. It must create a current pre-rend
 - Stop `legacy_remotion` before TTS/render when the pre-render review is missing, stale, `fix`, or `block`.
 - Stop every strategy short of publication-quality acceptance when final-artifact review is missing, stale, `fix`, or `block`.
 - Stop when objective MP4 verification fails.
+- Stop distribution handoff when final release evidence is missing, stale, malformed, or fails `evaluate` / `verify`.
 - Stop when doctor reports a required runtime missing for the deterministic fallback; give its exact action.
 - Stop before any upload, public post, deploy, paid API call, credential setup, or account action and return that boundary to the user.
 - Read [errors-and-privacy.md](references/errors-and-privacy.md) for recovery and data-handling rules.

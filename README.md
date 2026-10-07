@@ -23,9 +23,22 @@ npm run demo -- --output /tmp/video-explainer-first-success
 #   node scripts/video-explainer.mjs demo --output /tmp/video-explainer-first-success
 ```
 
-The Skill orchestrates this local clone (it does not bundle Remotion). Demo creates a script-bound pass receipt, uses macOS `say` as an explicitly **demo-quality** voice, renders 1080×1920, and runs the shorts verifier — no API key, no upload. For real projects: `review` then `render`; `fix` / `block` / missing / stale receipts cannot start rendering. The six review checks are product-defined; pass/fail is judged by the reviewer — the tool enforces process, not truth.
+The Skill orchestrates this local clone (it does not bundle Remotion). Demo creates a script-bound pass receipt, uses macOS `say` as an explicitly **demo-quality** voice, renders 1080×1920, and runs the shorts verifier — no API key, no upload. For real projects: `review` then `render`; `fix` / `block` / missing / stale receipts cannot start rendering. The eleven review checks are product-defined; pass/fail is judged by the reviewer — the tool enforces process, not truth.
 
 > Editing scripts or compositions? Read [docs/DESIGN.md](docs/DESIGN.md) first — it's the design system contract.
+
+## Final release gate
+
+The canonical `video-release-gate` implementation now lives in this pipeline:
+[`scripts/video_release_gate.py`](scripts/video_release_gate.py) and
+[`config/video_quality_profile.json`](config/video_quality_profile.json).
+Keep the pre-render receipt, `review-render`, and `verify-shorts`; then evaluate
+the **final master after all edits**, with hash-bound QA and independent review.
+`build-distribute-pack` requires a current release receipt and verifies it before
+writing any handoff. Downstream uploaders must verify again immediately before an
+authorized action. No uploader or automatic publication is added.
+
+See [the complete evaluate → verify → handoff commands](docs/RELEASE_GATE.md).
 
 ## What you get
 
@@ -137,7 +150,7 @@ This release was end-to-end tested on macOS (Apple Silicon) with `examples/my-fi
 
 The v0.1 pipeline stopped at `out/full.mp4`. v0.2 adds the "every time you make
 a video, you end up redoing this" steps into composable scripts you can chain
-or ignore:
+or compose; the release gate is mandatory before handoff:
 
 - **`scripts/prepend-cover.sh`** — prepend a still-image cover clip (default
   3s) to the rendered video. Probes the main video's width/height/fps and
@@ -147,7 +160,7 @@ or ignore:
   fixed offset. Pair with `prepend-cover.sh` when you need captions to stay
   aligned after adding an intro.
 - **`scripts/build-distribute-pack.mjs`** — emit per-platform upload packages
-  (Bilibili / YouTube / Xiaohongshu / Douyin) with chapter timestamps derived
+  (one of Bilibili / Xiaohongshu / Douyin per invocation) after release verification, with chapter timestamps derived
   from `metadata.json`. Supports a blacklist-based compliance pass that strips
   regulator-sensitive words while keeping brand names — stripping brands costs
   vertical-search discoverability.
@@ -169,8 +182,12 @@ Typical chained usage:
   --duration 3 \
   --out examples/my-first/out/full-with-cover.mp4
 
-# 3. Generate per-platform packages (chapters shift with the intro automatically)
-node ./scripts/build-distribute-pack.mjs examples/my-first --intro-offset 3
+# 3. Complete final QA/review and evaluate full-with-cover.mp4 (see docs/RELEASE_GATE.md).
+# 4. Verify and build one platform's handoff; repeat with each platform's evidence.
+node ./scripts/build-distribute-pack.mjs examples/my-first --intro-offset 3 \
+  --platform bilibili --video examples/my-first/out/full-with-cover.mp4 \
+  --cover examples/my-first/cover-bilibili.png \
+  --release-receipt examples/my-first/VIDEO-RELEASE-GATE-bilibili.json
 ```
 
 `shift-subtitles.py` is an optional utility for the case where you keep a

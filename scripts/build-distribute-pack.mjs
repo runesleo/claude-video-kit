@@ -2,17 +2,17 @@
 /**
  * build-distribute-pack.mjs
  *
- * Emits per-platform upload packages for a rendered project.
+ * Verifies the final release gate, then emits one platform's local handoff.
  *
  *   <project>/distribute/{bilibili,xiaohongshu,douyin}/
  *
- * YouTube is intentionally NOT in this pack. New flow: video posts to X
- * first, then `~/.config/youtube/upload.py` re-publishes the local mp4
- * directly with title/description hand-crafted at upload time.
+ * This command never uploads or publishes. Downstream publishers must verify
+ * the same release receipt again immediately before any external action.
  *     01-title.txt
  *     02-description.txt
  *     03-chapters.txt
  *     04-tags.txt
+ *     05-release-handoff.json
  *
  * Chapter timestamps come from <project>/metadata.json by cumulatively
  * summing each slide's durationInFrames (divided by fps). If an intro was
@@ -28,10 +28,14 @@
  * the top-level title / summary / tags.
  *
  * Usage:
- *   node scripts/build-distribute-pack.mjs <project_dir> [--intro-offset 3]
+ *   node scripts/build-distribute-pack.mjs <project_dir> --platform bilibili
+ *     --video <final.mp4> --cover <cover.png> --release-receipt <receipt.json>
+ *     [--intro-offset 3]
  */
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 // Per-platform blacklists. Keep lists conservative and WARN on match instead
 // of silently stripping — operators should decide whether the match is a
@@ -93,8 +97,14 @@ function parseArgs(argv) {
       const v = parseFloat(argv[++i]);
       if (!Number.isFinite(v)) throw new Error("--intro-offset needs a number");
       opts.introOffset = v;
+    } else if (["--platform", "--video", "--cover", "--release-receipt"].includes(a)) {
+      const value = argv[++i];
+      if (!value || value.startsWith("--")) throw new Error(`${a} requires a value`);
+      opts[a.slice(2)] = value;
     } else if (a === "-h" || a === "--help") {
       opts.help = true;
+    } else if (a.startsWith("-")) {
+      throw new Error(`unknown option: ${a}`);
     } else {
       positional.push(a);
     }
@@ -105,10 +115,26 @@ function parseArgs(argv) {
 function main() {
   const { positional, opts } = parseArgs(process.argv.slice(2));
   if (opts.help || positional.length === 0) {
-    console.log("usage: build-distribute-pack.mjs <project_dir> [--intro-offset 3]");
+    console.log("usage: build-distribute-pack.mjs <project_dir> --platform <bilibili|xiaohongshu|douyin> --video <final.mp4> --cover <cover.png> --release-receipt <receipt.json> [--intro-offset 3]");
     process.exit(opts.help ? 0 : 2);
   }
-  const project = positional[0];
+  if (positional.length !== 1) throw new Error("provide exactly one project directory");
+  const project = path.resolve(positional[0]);
+  for (const name of ["platform", "video", "cover", "release-receipt"]) {
+    if (!opts[name]) throw new Error(`release gate requires --${name}; no distribution files written`);
+  }
+  if (!PLATFORMS.includes(opts.platform)) throw new Error(`unsupported pack platform: ${opts.platform}`);
+  const gateScript = fileURLToPath(new URL("./video_release_gate.py", import.meta.url));
+  const verified = spawnSync("python3", [gateScript, "verify",
+    "--project-dir", project, "--platform", opts.platform,
+    "--video", path.resolve(opts.video), "--cover", path.resolve(opts.cover),
+    "--receipt", path.resolve(opts["release-receipt"]),
+  ], { encoding: "utf8", shell: false });
+  if (verified.error || verified.status !== 0) {
+    throw new Error(`release gate refused handoff: ${verified.error?.message || verified.stdout || verified.stderr}`);
+  }
+  const report = JSON.parse(verified.stdout);
+  if (report.status !== "PASS" || !report.verified) throw new Error("release gate returned no verified bindings");
 
   const scriptPath = path.join(project, "script.json");
   const metaPath = path.join(project, "metadata.json");
@@ -129,7 +155,7 @@ function main() {
   const baseTags = Array.isArray(script.tags) ? script.tags : [];
   const platformConfigs = script.platforms ?? {};
 
-  for (const p of PLATFORMS) {
+  for (const p of [opts.platform]) {
     const cfg = platformConfigs[p] ?? {};
     const dir = path.join(project, "distribute", p);
     fs.mkdirSync(dir, { recursive: true });
@@ -151,6 +177,11 @@ function main() {
     fs.writeFileSync(path.join(dir, "02-description.txt"), desc + "\n", "utf8");
     fs.writeFileSync(path.join(dir, "03-chapters.txt"), chapters + "\n", "utf8");
     fs.writeFileSync(path.join(dir, "04-tags.txt"), tags.join(" ") + "\n", "utf8");
+    fs.writeFileSync(path.join(dir, "05-release-handoff.json"), JSON.stringify({
+      schema: "video_release_handoff.v1",
+      ...report.verified,
+      next_step: "Run video_release_gate.py verify again immediately before upload or schedule. A local PASS is not publication authorization.",
+    }, null, 2) + "\n", "utf8");
 
     let line = `→ ${dir}/ (title=${title.length}ch, desc=${desc.length}ch, tags=${tags.length})`;
     if (warnings.length > 0) {
@@ -165,4 +196,9 @@ function main() {
   }
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  console.error(`error: ${error.message}`);
+  process.exitCode = 2;
+}
