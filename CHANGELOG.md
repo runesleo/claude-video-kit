@@ -2,6 +2,14 @@
 
 All notable local release-candidate changes are recorded here. A version entry does not imply that a tag, GitHub Release, or package publication exists.
 
+## Unreleased — final release gate
+
+- Fold `video-release-gate` evaluate/verify, quality profile, and its eight regression tests into this pipeline (issue #27).
+- Bind the final MP4, cover, three QA documents, independent final review, and current quality profile to one fail-closed release receipt; measure loudness, representative-window silence, and cover dimensions.
+- Require explicit platform, final video, cover, and a current release receipt before `build-distribute-pack.mjs` writes a handoff. Run it once per platform; the old ungated command now fails closed.
+- Recheck complete evidence, review independence, audio policy, project containment, and every hash at handoff; reject malformed receipts, missing QA, and failed or unavailable audio samples.
+- Keep the script-bound pre-render receipt, `review-render`, and four-check `verify-shorts` unchanged. Add no uploader, scheduler, account access, or publication action.
+
 ## Unreleased — 2026-09-14
 
 - Expand the guarded pre-render review from six checks to eleven by adding design-quality gates for hierarchy, simplicity, clarity, legibility, and craft.

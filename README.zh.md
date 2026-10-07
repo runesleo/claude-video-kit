@@ -140,10 +140,26 @@ v0.1 在 mac (Apple Silicon) 上端到端跑通了 `examples/my-first`，产出 
 - IndexTTS2 后端只是占位 — 脚本写了，CUDA 部分留给你自己接
 - 中文是主测语言，其他语言能跑但字幕质量取决于 Whisper 模型大小（`base` → `medium` → `large-v3`）
 
+## 最终成片 Release Gate
+
+`video-release-gate` 已并入本仓库，canonical 实现在
+[`scripts/video_release_gate.py`](scripts/video_release_gate.py)，质量门槛在
+[`config/video_quality_profile.json`](config/video_quality_profile.json)。
+
+保留原有渲染前 receipt、`review-render` 和 `verify-shorts`。所有封面、字幕、音频修改完成后，
+对最终 MP4 执行 `evaluate`：三份 QA 必须绑定最终视频 hash，独立终审必须绑定视频及封面 hash，
+制作人与审阅人必须不同；再检查响度、静音窗口、封面尺寸和版本化质量门槛。
+
+`build-distribute-pack` 现在必须提供对应平台的 release receipt，写出分发包前自动 `verify`。
+任一文件缺失、变更、证据不完整或检查失败都会阻断。下游上传/排期前还须立即复验；
+本仓库不新增自动上传、排期或发布，PASS 也不等于发布授权。
+
+完整命令与失败处理见 [最终成片放行指南](docs/RELEASE_GATE.md)。
+
 ## v0.2 新增：成片后管线
 
 v0.1 管线到 `out/full.mp4` 就结束了。v0.2 把"每次做视频都得重做一遍"的那几步
-写成了独立脚本，用不用随你：
+写成了可组合的脚本；进入分发交付前必须经过最终放行检查：
 
 - **`scripts/prepend-cover.sh`** — 把一张封面图作为 N 秒前插片头拼到渲染好的
   视频开头（默认 3 秒）。会先读主视频的宽高和帧率，让前插 clip 完全对齐，
@@ -151,7 +167,7 @@ v0.1 管线到 `out/full.mp4` 就结束了。v0.2 把"每次做视频都得重�
 - **`scripts/shift-subtitles.py`** — 把 `.srt` 里每条时间戳整体偏移一个固定秒数。
   配合 `prepend-cover.sh` 用——加了片头之后字幕自动跟着往后挪。
 - **`scripts/build-distribute-pack.mjs`** — 从 `metadata.json` 累加每个 slide 的
-  时长生成章节时间戳，一次出齐 B站 / YouTube / 小红书 / 抖音 四平台的标题 /
+  时长生成章节时间戳，复验通过后每次生成 B站 / 小红书 / 抖音 中一个平台的标题 /
   简介 / 章节 / 标签。合规化用敏感词黑名单过滤（"博彩 / 赌博 / 下注 / 盈利"
   这类），品牌名保留——把品牌名一起抹了 = 把自己从垂类搜索里拿掉。
 - **渲染前审稿闸**（见 [`docs/pre-render-review.md`](docs/pre-render-review.md)）
@@ -171,8 +187,12 @@ v0.1 管线到 `out/full.mp4` 就结束了。v0.2 把"每次做视频都得重�
   --duration 3 \
   --out examples/my-first/out/full-with-cover.mp4
 
-# 3. 生成四平台分发包（章节自动跟着片头偏移）
-node ./scripts/build-distribute-pack.mjs examples/my-first --intro-offset 3
+# 3. 对 full-with-cover.mp4 完成 QA、独立终审与 evaluate（见 docs/RELEASE_GATE.md）
+# 4. 复验后生成一个平台的交付包；其他平台使用各自的封面、终审与 receipt
+node ./scripts/build-distribute-pack.mjs examples/my-first --intro-offset 3 \
+  --platform bilibili --video examples/my-first/out/full-with-cover.mp4 \
+  --cover examples/my-first/cover-bilibili.png \
+  --release-receipt examples/my-first/VIDEO-RELEASE-GATE-bilibili.json
 ```
 
 `shift-subtitles.py` 是辅助工具——仅当你在 v0.1 管线之外另外维护了一份 `.srt`

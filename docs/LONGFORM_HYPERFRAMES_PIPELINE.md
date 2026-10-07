@@ -15,6 +15,7 @@ This repo (`claude-video-kit`) ships **shared building blocks**. The **HyperFram
 | TTS · IndexTTS2 | `scripts/tts_indextts2.py` | Local / short clips |
 | Caption align | `scripts/align.py` | Whisper word timestamps + script text |
 | Distribute pack | `scripts/build-distribute-pack.mjs` | Bilibili / Douyin / XHS metadata folders |
+| Final release gate | `scripts/video_release_gate.py` | Hash-bound final review, audio/cover checks, fail-closed handoff |
 | Metadata | `scripts/build-metadata.mjs` | Chapters for upload |
 | Cover | `scripts/gen_video_cover.py` | Platform cover sizes |
 
@@ -48,12 +49,20 @@ paid article / draft.md
   → slide-review (all slides approved)
   → preview.html full listen
   → daily.sh --stage render
-  → build-distribute-pack.mjs
+  → final master (finish cover/audio/subtitle edits)
+  → independent final review + hash-bound QA
+  → video_release_gate.py evaluate
+  → build-distribute-pack.mjs (verify before writing)
 ```
 
 ---
 
 ## Duration gate (critical)
+
+Follow [RELEASE_GATE.md](./RELEASE_GATE.md) for required final evidence and handoff
+arguments. Verify again immediately before any separately authorized upload or
+schedule. The release gate supports long-form media; the 60-second shorts check
+still applies only to shorts. This public kit does not add an uploader.
 
 **Slide count ≠ duration.** A 28-slide script with ~1200 characters of voiceover is ~4 minutes, not 12.
 

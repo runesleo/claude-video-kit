@@ -1,0 +1,35 @@
+{
+  "schema": "video_quality_profile.v1",
+  "version": "2026-09-motion-v2",
+  "minimum_scores": {
+    "motion_design": 4,
+    "composition_hierarchy": 4,
+    "pacing": 4,
+    "platform_fit": 4,
+    "visual_freshness": 4
+  },
+  "required_review_checks": [
+    "motion_serves_information",
+    "no_perpetual_decorative_loops",
+    "no_random_particles_or_floating_dots",
+    "transition_language_consistent",
+    "attention_hierarchy_clear",
+    "visual_freshness_pass"
+  ],
+  "motion_language": {
+    "principles": [
+      "Motion must reveal, compare, focus, explain, or transition; decorative movement alone is not a reason to animate.",
+      "Prefer one dominant moving focal region at a time so the viewer always knows where to look.",
+      "Do not run perpetual particles, floating dots, random decorative lines, jitter, or attention-stealing loops on information scenes.",
+      "Prefer restrained mask/clip reveals, opacity, position and scale, data-driven chart growth, and sparse camera-like depth over gimmicky bounce or overshoot.",
+      "Use one transition language per video; vary intensity by narrative importance, not randomly by scene.",
+      "A newer model or workflow may raise this profile, but should not silently lower the minimum score floor."
+    ],
+    "timing_guidance_ms": {
+      "micro_emphasis": [120, 220],
+      "scene_transition": [220, 480],
+      "data_reveal": [300, 700]
+    }
+  },
+  "upgrade_rule": "Bump version whenever the quality floor, required review checks, or motion language materially changes; old release receipts must then be re-reviewed before publishing."
+}

@@ -29,4 +29,8 @@ examples/*/distribute/
 examples/*/distribute.zip
 **/review-result.json
 **/video-explainer-result.json
+**/VIDEO-RELEASE-GATE*.json
+**/FINAL-REVIEW*.json
+**/render-review-result.json
+**/05-release-handoff.json
 .env

@@ -47,3 +47,16 @@ The command writes `render-review-result.json` next to the video by default and 
 The rendered review must pass five design-quality checks — hierarchy, simplicity, clarity, legibility, and craft — plus `audio_consistency` and `end_card`. `audio_consistency` is separate because the current objective verifier does not yet automate chapter-level LUFS consistency.
 
 The canonical `demo` command runs pre-render review, render, and objective verification in order and writes `video-explainer-result.json`. It deliberately reports the rendered-output review as not run: a demo cannot independently self-approve its own visual/audio output. Treat that result as local evidence, not publication approval.
+
+## Final release and distribution handoff
+
+After every media-changing edit, repeat objective verification and independent
+review on the final MP4. Follow [the final release gate](../../../docs/RELEASE_GATE.md)
+for `evaluate` / `verify`, the platform review template, three hash-bound QA files,
+and the current quality profile. This adds machine loudness/silence/cover checks
+and complete hash binding without replacing the checks above.
+
+`build-distribute-pack.mjs` now requires `--platform`, `--video`, `--cover`, and
+`--release-receipt`; it verifies before writing. A downstream uploader must call
+the same `verify` immediately before upload/schedule and abort on any nonzero exit.
+The Skill never performs that external action. Demo output has no release approval.
