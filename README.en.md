@@ -6,6 +6,13 @@ Turn a JSON script into a vertical short video. TTS + Whisper caption alignment 
 
 > Editing scripts or compositions? Read [docs/DESIGN.md](docs/DESIGN.md) first — it's the design system contract.
 
+## Install as a plugin
+
+- **Claude Code** (2.1.275 or later): `/plugin install video-explainer-kit --marketplace runesleo/x-reader`
+- **Codex**: `codex plugin marketplace add runesleo/x-reader`, then `codex plugin add video-explainer-kit@runesleo`
+
+The `runesleo` marketplace also lists Leo's other tools; see [runesleo/x-reader](https://github.com/runesleo/x-reader).
+
 ## Final release gate
 
 The canonical `video-release-gate` implementation now lives in this pipeline:

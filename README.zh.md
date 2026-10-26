@@ -11,6 +11,13 @@
 
 > **[v0.3.0-rc.1](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.1)（公开候选版）：** 可安装 `video-explainer` Skill；独立审稿回执必须绑定当前 `script.json` 才能渲染。Skill 不做上传/发帖。
 
+## 作为插件安装
+
+- **Claude Code**（2.1.275 及以上）：`/plugin install video-explainer-kit --marketplace runesleo/x-reader`
+- **Codex**：先 `codex plugin marketplace add runesleo/x-reader`，再 `codex plugin add video-explainer-kit@runesleo`
+
+`runesleo` 插件市场里还有 Leo 的其他工具，见 [runesleo/x-reader](https://github.com/runesleo/x-reader)。
+
 ## 最快跑出第一条：Agent Skill
 
 ```bash

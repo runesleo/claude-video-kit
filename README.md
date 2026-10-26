@@ -9,6 +9,13 @@ Turn a research brief or JSON script into a **vertical explainer** — TTS + cap
 
 > **[v0.3.0-rc.1](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.1) (public release candidate):** installable `video-explainer` Agent Skill. Independent review receipt must bind to the exact `script.json` before render. Skill never uploads or publishes.
 
+## Install as a plugin
+
+- **Claude Code** (2.1.275 or later): `/plugin install video-explainer-kit --marketplace runesleo/x-reader`
+- **Codex**: `codex plugin marketplace add runesleo/x-reader`, then `codex plugin add video-explainer-kit@runesleo`
+
+The `runesleo` marketplace also lists Leo's other tools; see [runesleo/x-reader](https://github.com/runesleo/x-reader).
+
 ## Fastest first success: Agent Skill
 
 ```bash

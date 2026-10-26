@@ -1,0 +1,33 @@
+{
+  "name": "video-explainer-kit",
+  "version": "0.3.0-rc.1",
+  "description": "Turn a brief, script or MP4 into a reviewed, verified vertical explainer video, with review receipts before publishing.",
+  "author": {
+    "name": "Leo",
+    "url": "https://github.com/runesleo"
+  },
+  "homepage": "https://github.com/runesleo/claude-video-kit",
+  "repository": "https://github.com/runesleo/claude-video-kit",
+  "license": "MIT",
+  "keywords": [
+    "video",
+    "remotion",
+    "explainer",
+    "tts"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "video-explainer-kit",
+    "shortDescription": "Brief to reviewed vertical explainer video",
+    "longDescription": "Turn a brief, script or MP4 into a reviewed, verified vertical explainer video, with review receipts before publishing.",
+    "developerName": "Leo",
+    "category": "Productivity",
+    "capabilities": [
+      "Read"
+    ],
+    "defaultPrompt": [
+      "Turn this brief into a vertical explainer video."
+    ],
+    "websiteURL": "https://github.com/runesleo/claude-video-kit"
+  }
+}
