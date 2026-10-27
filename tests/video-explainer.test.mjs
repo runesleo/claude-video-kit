@@ -319,8 +319,11 @@ test('doctor CLI is read-only, machine-readable, and reports the supported local
   const doctor = await runNode([cli, 'doctor', '--json', '--output', output])
   const report = JSON.parse(doctor.stdout)
   assert.equal(doctor.code, report.ok ? 0 : 1, doctor.stderr)
-  if (report.ok) assert.ok(['say-demo', 'fish-audio'].includes(report.ttsMode))
-  else assert.equal(report.ttsMode, 'unavailable')
+  assert.ok(['say-demo', 'fish-audio', 'unavailable'].includes(report.ttsMode))
+  if (report.ok) assert.notEqual(report.ttsMode, 'unavailable')
+  // ttsMode reports voice availability on its own; a Mac missing only remotion is ok=false with say-demo.
+  const ttsAction = report.actions.some((action) => /Fish Audio credentials/.test(action))
+  assert.equal(report.ttsMode === 'unavailable', ttsAction)
   for (const name of ['node', 'python', 'ffmpeg', 'ffprobe', 'remotion', 'outputWritable']) {
     assert.equal(typeof report.observations[name].ok, 'boolean')
   }
