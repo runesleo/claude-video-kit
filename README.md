@@ -241,6 +241,27 @@ need, skip the rest.
 
 *Learn in public, Build in public.*
 
+## Data and network access
+
+The kit runs on your machine. There is no telemetry, and nothing is sent to the author's servers. The offline demo (`node scripts/video-explainer.mjs demo`) uses the local macOS `say` voice and script-timed captions, so it calls no API.
+
+When you render your own video, data goes only to the services you choose:
+
+| What | Where it goes |
+|---|---|
+| Narration text, default `cosyvoice` backend | Alibaba Cloud DashScope (`wss://dashscope.aliyuncs.com`, or `DASHSCOPE_WS_URL`), with your `DASHSCOPE_API_KEY` |
+| Narration text, `fish` backend | `api.fish.audio`, only if you set `FISH_AUDIO_API_KEY` and `FISH_AUDIO_VOICE_ID`; without them it falls back to the local `say` command |
+| Narration text, `indextts2` backend | Nowhere: it runs your local IndexTTS2 checkout with network downloads turned off |
+| Narration text and your voice reference audio, optional `scripts/modal_tts_batch.py` | Modal, only when you run it yourself with `modal run`; the Modal image clones `github.com/index-tts/index-tts` |
+| Word-level caption alignment | Runs locally with faster-whisper, which downloads the Whisper model from Hugging Face on first use |
+| Video rendering | Runs locally with Remotion, which downloads Chrome Headless Shell into `remotion/node_modules` on the first render |
+
+Setup downloads dependencies you install yourself: Remotion and its packages from the npm registry (`npm ci --prefix remotion`), and the Python packages in `scripts/requirements.txt` (plus `dashscope` for CosyVoice) from PyPI.
+
+The TTS scripts read API keys only from environment variables or a `.env` file in the directory you run them from, and send each key only to its own service.
+
+Stored only on your machine: everything a render produces inside your project folder (`workspace/` audio and captions, `metadata.json`, `out/full.mp4`, review and gate receipts), demo output (`out/video-explainer-demo-*` in the kit, or the path you pass with `--output`), and model caches (Hugging Face cache for Whisper, Chrome Headless Shell under `remotion/node_modules`).
+
 ## License
 
 MIT
