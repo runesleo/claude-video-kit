@@ -9,6 +9,7 @@
   "homepage": "https://github.com/runesleo/claude-video-kit",
   "repository": "https://github.com/runesleo/claude-video-kit",
   "license": "MIT",
+  "privacyPolicyUrl": "https://github.com/runesleo/claude-video-kit#data-and-network-access",
   "keywords": [
     "video",
     "remotion",

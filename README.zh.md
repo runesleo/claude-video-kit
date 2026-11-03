@@ -244,6 +244,27 @@ Remotion 渲染阶段直接烧进画面的，不走 srt，所以大部分用户�
 
 *Learn in public, Build in public.*
 
+## 数据与网络访问
+
+整套工具在你自己的电脑上运行。没有遥测，不会把任何数据发给作者的服务器。离线 demo（`node scripts/video-explainer.mjs demo`）用 macOS 自带的 `say` 配音、按脚本时长生成字幕，不调用任何 API。
+
+渲染你自己的视频时，数据只会发往你选用的服务：
+
+| 内容 | 发往哪里 |
+|---|---|
+| 旁白文本，默认 `cosyvoice` 后端 | 阿里云 DashScope（`wss://dashscope.aliyuncs.com`，或 `DASHSCOPE_WS_URL` 指定的地址），使用你的 `DASHSCOPE_API_KEY` |
+| 旁白文本，`fish` 后端 | `api.fish.audio`，仅在你设置了 `FISH_AUDIO_API_KEY` 和 `FISH_AUDIO_VOICE_ID` 时；没设置就退回本机 `say` 命令 |
+| 旁白文本，`indextts2` 后端 | 不出本机：调用你本地的 IndexTTS2，并关闭联网下载 |
+| 旁白文本和你的声音参考音频，可选的 `scripts/modal_tts_batch.py` | Modal，仅在你自己用 `modal run` 运行时；Modal 镜像会克隆 `github.com/index-tts/index-tts` |
+| 逐词字幕对齐 | 在本机用 faster-whisper 运行，首次使用时从 Hugging Face 下载 Whisper 模型 |
+| 视频渲染 | 在本机用 Remotion 运行，首次渲染时把 Chrome Headless Shell 下载到 `remotion/node_modules` |
+
+安装时会下载你自己装的依赖：Remotion 及相关包来自 npm registry（`npm ci --prefix remotion`），`scripts/requirements.txt` 里的 Python 包（CosyVoice 另需 `dashscope`）来自 PyPI。
+
+TTS 脚本只从环境变量或运行目录下的 `.env` 文件读取 API key，每个 key 只发给它对应的服务。
+
+只保存在你本机的内容：渲染在项目目录里生成的所有文件（`workspace/` 下的音频和字幕、`metadata.json`、`out/full.mp4`、审稿和 gate 回执），demo 输出（默认在工具目录的 `out/video-explainer-demo-*`，或你用 `--output` 指定的路径），以及模型缓存（Whisper 的 Hugging Face 缓存、`remotion/node_modules` 下的 Chrome Headless Shell）。
+
 ## 许可
 
 MIT
