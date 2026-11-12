@@ -6,14 +6,13 @@
  * computes per-slide durationInFrames from actual WAV duration, and emits
  * <project>/metadata.json for Remotion to consume via --props.
  *
- * WAV duration is read from the header (no ffprobe dependency):
- *   data chunk size / byte rate = seconds
+ * WAV duration is read via ffprobe, which handles nonstandard WAV headers.
  *
  * Usage: node scripts/build-metadata.mjs <project_dir>
  */
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 /**
  * Reads WAV duration via ffprobe.
@@ -27,8 +26,9 @@ import { execSync } from "node:child_process";
  * Requirements), so there's no extra install cost.
  */
 function wavDurationSeconds(wavPath) {
-  const out = execSync(
-    `ffprobe -v error -show_entries format=duration -of csv=p=0 "${wavPath}"`,
+  const out = execFileSync(
+    "ffprobe",
+    ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", "-i", wavPath],
     { encoding: "utf8" }
   );
   const seconds = parseFloat(out.trim());
