@@ -19,13 +19,23 @@
     },
     {
       "type": "text",
-      "text": "Facts · structure · duration",
-      "voice_text": "Check facts, structure, duration."
+      "text": "Facts · structure",
+      "voice_text": "Check facts and structure."
     },
     {
       "type": "text",
-      "text": "Visuals · privacy · copyright",
-      "voice_text": "Check visuals, privacy, copyright."
+      "text": "Timing · duration",
+      "voice_text": "Check timing and duration."
+    },
+    {
+      "type": "text",
+      "text": "Visual clarity",
+      "voice_text": "Check visual clarity."
+    },
+    {
+      "type": "text",
+      "text": "Privacy · copyright",
+      "voice_text": "Check privacy and copyright."
     },
     {
       "type": "code",
