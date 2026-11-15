@@ -2,14 +2,14 @@
 
 [English](./README.md) · **中文**
 
-把研究 brief 或 JSON 脚本，变成一条**竖屏讲解片**——TTS + 字幕对齐 + Remotion，不用打开时间轴。
+**Video Explainer Kit** 是 AI Agent 使用的**解说视频制作与质量验收工作流**：从研究资料、脚本或已有 MP4 出发，按现有能力选择直接生成、Agent 组合工具，或回退到本仓库的 TTS + 字幕对齐 + Remotion 管线，最后验收成片。
 
 这是我自己做视频用的管线。第一条发出去之后有人问「这怎么做的」，于是抽出来开源。
 
-**适合谁：** 已经在 Claude Code / Cursor 里写研究或技术讲解、需要可重复 9:16 管线，并且接受**渲染前审稿闸**的人。  
-**不适合谁：** 想要「输入选题 → AI 画面 Short 一条龙」的工厂党。我们优化的是可复查脚本 + 可复现 motion graphics，不是生成视频彩票。
+**适合谁：** 使用 Claude Code、Codex、Cursor 等 AI Agent 制作研究或技术解说视频，并希望流程可复现、成品可独立验收的人。  
+**不适合谁：** 期待托管式视频编辑器、Claude 专属 API 产品，或「输入选题 → 保证产出精美 AI 视频」的一键工厂。本仓库提供本地 Remotion 回退和验收工具，**不内置视频生成模型**。
 
-> **[v0.3.0-rc.1](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.1)（公开候选版）：** 可安装 `video-explainer` Skill；独立审稿回执必须绑定当前 `script.json` 才能渲染。Skill 不做上传/发帖。
+> **[v0.3.0-rc.1](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.1)（公开候选版）：** 可安装 `video-explainer` Skill。`legacy_remotion` 路线的渲染前审稿必须绑定当前 `script.json`；所有制作路线都需要针对最终 MP4 进行验证和独立审核。Skill 不上传、不发帖。
 
 ## 作为插件安装
 
@@ -25,28 +25,28 @@ git clone https://github.com/runesleo/claude-video-kit.git
 cd claude-video-kit
 npm ci --prefix remotion
 npx skills add runesleo/claude-video-kit --skill video-explainer
-npm run doctor -- --output /tmp/video-explainer-first-success
-npm run demo -- --output /tmp/video-explainer-first-success
+npm run doctor
+npm run demo   # 仅适用于带 macOS say 的免 key 演示；自动创建时间戳输出目录
 
 # npm script 只是薄封装，直接跑底层命令等价：
 #   node scripts/video-explainer.mjs demo --output /tmp/video-explainer-first-success
 ```
 
-Skill 编排的是本仓库本地渲染器（不打包 Remotion）。demo 会生成与脚本绑定的 pass 回执，用 macOS `say` 作**明确标注的 demo 音质**，输出 1080×1920 并跑 shorts 验收——无 API key、不上传。正式项目：先 `review` 再 `render`；`fix` / `block` / 缺失 / 过期都不能开渲。六个检查项是产品定的清单；过不过由 reviewer 判断——工具强制流程，不替你保证内容正确。
+免 key 的 `demo` 在 **macOS** 上使用本仓库 Remotion 回退：自带 `say` 配音、按脚本时间生成演示字幕，输出 1080×1920 视频并跑客观检查，不会调用付费 API 或上传。**这不是可直接发布的成片**：演示不会运行独立的最终视频审核。真实项目如选择 `legacy_remotion`，需先准备动态分镜，再 `review`、`render`；十一项渲染前审稿任一 `fix` / `block` / 缺失 / 过期都会阻止渲染。审核者判断内容是否通过，程序仅强制留痕与流程。其他制作策略不强制生成旧管线中间文件，但仍需验收最终 MP4 和发布前门禁。
 
 **横屏 8–15 分钟长视频**（HyperFrames + CosyVoice + 逐镜验收）见 **[docs/LONGFORM_HYPERFRAMES_PIPELINE.md](./docs/LONGFORM_HYPERFRAMES_PIPELINE.md)** — 编排脚本在生产 long-form workspace，本仓库提供 TTS / align / 分发等共用模块。  
 → 2026-05-26：**[可考虑升级](./docs/UPGRADE-NOTE-2026-05-26.md)**（编排已在生产 long-form workflow；kit 侧主要是 TTS/文档/slide-review 同步）。
 
 ## 核心能力
 
-- **一条命令跑完整个管线** — TTS、字幕对齐、帧数计算、Remotion 渲染全自动串联
+- **带质量门禁的 Remotion 回退** — 准备好动态分镜和有效审稿回执后，由 `render` 串联 TTS、字幕、时长和 Remotion；macOS 用户首次测试请用 `npm run demo`
 - **帧数从音频算，不靠数** — 每个 slide 的时长由生成的 WAV 文件精确决定，永远不会音画错位
 - **三种通用 slide，复制即改** — 封面 / 文字 / 代码展示，看不上随时换
-- **中文语音克隆用 Fish Audio** — 默认声音质量直接可用，本地跑 IndexTTS2 也行（需要 GPU）
+- **配音后端明确选择** — `render.sh` 默认 CosyVoice（需 DashScope 密钥及克隆音色 ID）；Fish Audio 要显式设置 `TTS_BACKEND=fish`；IndexTTS2 需要自行配置本地环境；免密钥演示使用 macOS `say`
 - **字幕词级精准** — faster-whisper 产出的时间戳烧进视频不跳字
 - **Remotion Studio 热更新** — 改组件直接看效果，像改前端一样改视频
 
-## 管线长这样
+## Remotion 回退管线长这样
 
 ```
 script.json ──▶ TTS ──▶ *.wav ──▶ Whisper 对齐 ──▶ captions.json
@@ -76,15 +76,15 @@ script.json ──▶ TTS ──▶ *.wav ──▶ Whisper 对齐 ──▶ cap
 }
 ```
 
-### 跑一条命令
+### 首次运行（macOS，免 key）
 
 ```bash
-./scripts/render.sh examples/my-first
+npm run demo
 ```
 
-### 出来的就是成品
+### 输出仅供验收管线
 
-`examples/my-first/out/full.mp4` — 1080×1920 竖屏，音画对齐，字幕烧录好。可以直接发抖音、小红书、B站、YouTube Shorts。
+`out/video-explainer-demo-*/out/full.mp4` 是 1080×1920 的 demo 视频，**不能直接作为发布版**。`examples/my-first/script.json` 是旧版输入示例；缺少正式动态分镜时，不要直接把 `render.sh` 用作新版首次运行命令。
 
 ## 安装
 
@@ -93,20 +93,21 @@ git clone https://github.com/runesleo/claude-video-kit.git
 cd claude-video-kit
 cd remotion && npm install && cd ..
 pip install -r scripts/requirements.txt
-cp .env.example .env   # 填 FISH_AUDIO_API_KEY, FISH_AUDIO_VOICE_ID
+cp .env.example .env   # 可选：只有主动选用对应供应商时才填写
 ```
 
-**让 AI 帮你写脚本**：把 `docs/quickstart.md` 和 `examples/schoger-demo/` 丢给你的 AI agent（Claude Code / Cursor / 别的都行），让它照着改。整个管线就四个脚本，任何 agent 读一遍就会用。
+**让 AI 帮你制作视频**：先让 Agent 阅读 [Skill](skills/video-explainer/SKILL.md) 和 [当前 Quickstart](docs/quickstart.md)；正式项目需要准备分镜、审稿和最终 MP4 验收，不能直接照旧版单脚本示例跳过门禁。
 
 ## 依赖
 
 - Node 20+
 - Python 3.10+
 - ffmpeg（`brew install ffmpeg`）
-- Fish Audio API key（默认 TTS）— 没有也能跑，会降级到 macOS 的 `say` 命令
-- （可选）CUDA GPU，如果你想跑本地 IndexTTS2
+- **免 key demo：** 需要 macOS 自带 `say`；`demo` 会主动清空 Fish 配置，因此不适合作为 Linux/Windows 的演示入口。
+- **正式 Remotion 配音：** 默认 CosyVoice，需要 `DASHSCOPE_API_KEY`、`COSYVOICE_VOICE_ID` 和 Python `dashscope` 依赖；选择 Fish Audio 时，需要自己的密钥与声音 ID，并在启动前**显式设置**环境变量 `TTS_BACKEND=fish`。
+- （可选）CUDA GPU：如果你另外配置了本地 IndexTTS2。
 
-没用过 Fish Audio？[这里注册](https://fish.audio/?code=VCG6XOES4XIY2)。中文声音克隆业内最强之一，API 用起来很傻瓜。
+[Fish Audio 注册入口](https://fish.audio/?code=VCG6XOES4XIY2)只适用于主动选择该可选后端的用户，并非本项目必需服务。
 
 就这些。不用视频剪辑软件，不用录音设备，不用时间轴思维。
 
@@ -119,7 +120,7 @@ cp .env.example .env   # 填 FISH_AUDIO_API_KEY, FISH_AUDIO_VOICE_ID
 | `code` | 代码展示 + 旁白 | `code`, `language`, `voice_text` | `voice` |
 | `numberHero` | 大数字数据钩子（短视频） | `heroValue` | `heroLabel`、`heroBadge`、`heroPrefix`、`heroSuffix`、`heroAccentColor` |
 
-**`voice_text`** 是旁白文案 — 和屏幕上的 `text` 字段分开，这样旁白可以比屏幕显示的更自然口语化。**`voice`** 是这一条 slide 单独覆盖的 Fish Audio 声音 ID（不写就用全局默认的）。
+**`voice_text`** 是旁白文案，与屏幕上的 `text` 分离。**`voice`** 是在所选配音后端支持时使用的逐镜声音覆盖（Fish Audio 支持；不要假定所有后端表现一致）。
 
 不够用？在 `remotion/src/compositions/` 扔一个新组件，在 `Root.tsx` 注册一下就能用。详见 `docs/quickstart.md`。
 
@@ -129,18 +130,18 @@ Phase 1 加了竖屏短视频管线：1080×1920 画布，密集运动，大字 
 
 ## 仓库里的两个示例
 
-- **`examples/my-first/`** — 3 个 slide 的极简起手模板。复制这个文件夹，改 `script.json`，渲染，搞定。最快出第一条视频的路径。
+- **`examples/my-first/`** — 3 个 slide 的旧版 `script.json` 示例，并不是新版可直接生产渲染的完整项目；第一次出片请使用 `npm run demo`。
 - **`examples/schoger-demo/`** — [我在 X 上发的第一条 AI 视频](https://x.com/runes_leo)的脚本。当作"真实成品长什么样"的参考留着（不含素材，只有脚本）。
 
-## 验证过的
+## 历史验证（v0.1）
 
-v0.1 在 mac (Apple Silicon) 上端到端跑通了 `examples/my-first`，产出 **1080×1920 @ 30fps，8 秒，442 KB** 的竖屏 mp4 — 旁白用 Fish Audio（没 API key 会降级到 macOS `say`），字幕用 Whisper，渲染用 Remotion。中国大陆首次安装需要挂代理，详见 `docs/quickstart.md`。
+以下是旧版验证记录，不等于对 v0.3.0-rc.1 的所有制作策略完成了全新机器安装验收。v0.1 在 mac (Apple Silicon) 上端到端跑通了 `examples/my-first`，产出 **1080×1920 @ 30fps，8 秒，442 KB** 的竖屏 mp4 — 旁白用 Fish Audio（没 API key 会降级到 macOS `say`），字幕用 Whisper，渲染用 Remotion。中国大陆首次安装需要挂代理，详见 `docs/quickstart.md`。
 
-## v0.1 的局限
+## 历史限制（v0.1，部分内容可能已更新）
 
 先说清楚什么**不支持**，免得你装完发现和想象的不一样：
 
-- **`say` 兜底只用于"管线能跑通"，要发的视频请上 Fish Audio。** 没填 API key 的时候，TTS 会降级到 macOS 自带的 `say`。这条路够你验证整个管线，但有两个真实痛点：(a) 中文多音字会读错，比如 `一行代码` 的"行"会被读成 háng；(b) Whisper `base` 模型对合成腔的字幕对齐差一拍。换成 Fish Audio 的真人声音，两个问题都消失。
+- **`say` 仅适合测试，不代表视频可以发布。** 没填 API key 的时候，TTS 会降级到 macOS 自带的 `say`。这条路够你验证整个管线，但有两个真实痛点：(a) 中文多音字会读错，比如 `一行代码` 的"行"会被读成 háng；(b) Whisper `base` 模型对合成腔的字幕对齐差一拍。换高质量配音并重新审核字幕可以改善，但不能仅靠换 TTS 就保证发音与字幕正确。
 - 没有自动封面生成器 — 封面就是 `cover` slide 渲出来的样子
 - 没有 B-roll / 视频片段支持 — slide 都是静帧 + 音频 + 字幕
 - 一条视频一个声音（schema 留了 per-slide 声音覆盖，但还没大量测试）
@@ -177,11 +178,11 @@ v0.1 管线到 `out/full.mp4` 就结束了。v0.2 把"每次做视频都得重�
   时长生成章节时间戳，复验通过后每次生成 B站 / 小红书 / 抖音 中一个平台的标题 /
   简介 / 章节 / 标签。合规化用敏感词黑名单过滤（"博彩 / 赌博 / 下注 / 盈利"
   这类），品牌名保留——把品牌名一起抹了 = 把自己从垂类搜索里拿掉。
-- **渲染前审稿闸**（见 [`docs/pre-render-review.md`](docs/pre-render-review.md)）
-  —— 一个约定，不是代码：文稿进 TTS + 渲染之前，让另一个模型读一遍。
+- **渲染前审稿闸**（旧版 v0.2 的说明；以当前 [Agent Skill](skills/video-explainer/SKILL.md) 为准）
+  —— 最初是人工约定，现在 `legacy_remotion` 路线需要绑定脚本 SHA 的独立审核回执，未通过不能渲染。
   TTS + 渲染一轮大概 30 分钟，5 分钟的审稿通常能免掉 2 小时重跑。
 
-典型串联用法：
+旧版 v0.2 串联示例（不是新版首次运行步骤；现在仍需先通过分镜、审稿与最终发布门禁）：
 
 ```bash
 # 1. 和 v0.1 一样渲染
@@ -261,7 +262,7 @@ Remotion 渲染阶段直接烧进画面的，不走 srt，所以大部分用户�
 
 安装时会下载你自己装的依赖：Remotion 及相关包来自 npm registry（`npm ci --prefix remotion`），`scripts/requirements.txt` 里的 Python 包（CosyVoice 另需 `dashscope`）来自 PyPI。
 
-TTS 脚本只从环境变量或运行目录下的 `.env` 文件读取 API key，每个 key 只发给它对应的服务。
+配音后端按各自实现读取进程环境变量；Fish Audio 脚本还会尝试加载 `.env`。仅编辑 `.env` **不会自动为 `render.sh` 设置 `TTS_BACKEND`**。只有显式选中某个供应商才会使用相应凭证；免 key demo 会主动清空 Fish 配置。
 
 只保存在你本机的内容：渲染在项目目录里生成的所有文件（`workspace/` 下的音频和字幕、`metadata.json`、`out/full.mp4`、审稿和 gate 回执），demo 输出（默认在工具目录的 `out/video-explainer-demo-*`，或你用 `--output` 指定的路径），以及模型缓存（Whisper 的 Hugging Face 缓存、`remotion/node_modules` 下的 Chrome Headless Shell）。
 
