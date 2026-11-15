@@ -2,12 +2,12 @@
 
 **English** · [中文](./README.zh.md) · [README.en.md](./README.en.md)
 
-Turn a research brief or JSON script into a **vertical explainer** — TTS + caption alignment + Remotion — without opening a timeline editor.
+**Video Explainer Kit** is an Agent Skill for producing and checking **reviewed, verified vertical explainer videos** from a research brief, script, or existing MP4. It can select direct generation, agent-orchestrated tools, or the repository's deterministic TTS + caption alignment + Remotion fallback.
 
-**Who it's for:** people already writing research / technical explainers in Claude Code or Cursor who want a repeatable 9:16 pipeline with a **pre-render review gate**.  
-**Who it's not for:** one-click “topic → AI b-roll Short” factories. We optimize for auditable scripts and reproducible motion graphics, not generative video lottery.
+**Who it's for:** people using Claude Code, Codex, Cursor, or another capable AI agent to make research / technical explainers, and who value a repeatable 9:16 workflow with independent quality checks.  
+**Who it's not for:** a hosted video editor, a Claude-only API product, or a guaranteed one-click “topic → polished AI B-roll Short” service. This repository ships a local Remotion fallback and verification tools; direct video-generation models are not bundled.
 
-> **[v0.3.0-rc.1](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.1) (public release candidate):** installable `video-explainer` Agent Skill. Independent review receipt must bind to the exact `script.json` before render. Skill never uploads or publishes.
+> **[v0.3.0-rc.1](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.1) (public release candidate):** installable `video-explainer` Agent Skill. The `legacy_remotion` path requires an independent, script-hash-bound pre-render review; every strategy requires verification and an independent review bound to the exact final MP4. The Skill never uploads or publishes.
 
 ## Install as a plugin
 
@@ -23,14 +23,14 @@ git clone https://github.com/runesleo/claude-video-kit.git
 cd claude-video-kit
 npm ci --prefix remotion
 npx skills add runesleo/claude-video-kit --skill video-explainer
-npm run doctor -- --output /tmp/video-explainer-first-success
-npm run demo -- --output /tmp/video-explainer-first-success
+npm run doctor
+npm run demo   # macOS + built-in say only; writes a new timestamped demo folder
 
 # npm scripts are thin wrappers — the underlying command works the same:
 #   node scripts/video-explainer.mjs demo --output /tmp/video-explainer-first-success
 ```
 
-The Skill orchestrates this local clone (it does not bundle Remotion). Demo creates a script-bound pass receipt, uses macOS `say` as an explicitly **demo-quality** voice, renders 1080×1920, and runs the shorts verifier — no API key, no upload. For real projects: `review` then `render`; `fix` / `block` / missing / stale receipts cannot start rendering. The eleven review checks are product-defined; pass/fail is judged by the reviewer — the tool enforces process, not truth.
+The no-key `demo` exercises this local clone's Remotion fallback **on macOS**. It uses the built-in `say` voice and script-timed captions, writes a new timestamped output folder, checks a 1080×1920 MP4, and **does not** perform final-artifact review or qualify the video for publication. For real `legacy_remotion` projects, first prepare a motion storyboard, then run `review` and `render`; `fix`, `block`, missing, or stale receipts stop rendering. The eleven pre-render checks are judged by an independent reviewer — the tool enforces the recorded process, not the truth of those judgments. Direct/agent-orchestrated strategies may skip legacy intermediate files but must pass final MP4 review and release gates.
 
 > Editing scripts or compositions? Read [docs/DESIGN.md](docs/DESIGN.md) first — it's the design system contract.
 
@@ -49,14 +49,14 @@ See [the complete evaluate → verify → handoff commands](docs/RELEASE_GATE.md
 
 ## What you get
 
-- **One-command pipeline** — `./scripts/render.sh <project>` runs TTS, alignment, metadata build, and Remotion render end-to-end.
+- **Guarded Remotion fallback** — once a project has the required storyboard and current pass receipt, `render` orchestrates TTS, alignment, metadata, and Remotion; use `npm run demo` for a keyless first run on macOS.
 - **Metadata-driven timing** — slide durations computed from actual WAV length, no manual frame counting.
 - **Composable slides** — `cover`, `text`, `code` compositions out of the box, each drop-in replaceable.
-- **Dual TTS backends** — Fish Audio API (default, excellent Chinese cloning) or local IndexTTS2 (free, GPU required).
+- **Explicit TTS backends** — `render.sh` defaults to CosyVoice (requires your DashScope key and cloned voice ID); Fish Audio is opt-in via `TTS_BACKEND=fish`, and local IndexTTS2 requires its own setup. The no-key demo deliberately uses macOS `say`.
 - **Word-level captions** — faster-whisper produces frame-accurate caption tracks that burn into the render.
 - **Remotion Studio hot reload** — iterate on compositions in React with live preview.
 
-## How it works
+## How the deterministic Remotion fallback works
 
 ```
 script.json ──▶ TTS ──▶ *.wav ──▶ Whisper align ──▶ captions.json
@@ -85,12 +85,12 @@ script.json ──▶ TTS ──▶ *.wav ──▶ Whisper align ──▶ capt
 }
 ```
 
-**Run**:
+**First run (macOS, no keys)**:
 ```bash
-./scripts/render.sh examples/my-first
+npm run demo
 ```
 
-**Output**: `examples/my-first/out/full.mp4` — a 1080×1920 vertical video with narration and captions, timed exactly to the generated audio.
+**Output**: `out/video-explainer-demo-*/out/full.mp4` — a 1080×1920 demo-quality vertical video. `examples/my-first/script.json` remains a legacy input example; calling `render.sh` directly on that example without the required motion storyboard is **not** a supported current first-run path.
 
 ## Setup
 
@@ -100,21 +100,21 @@ git clone https://github.com/runesleo/claude-video-kit.git
 cd claude-video-kit
 cd remotion && npm install && cd ..
 pip install -r scripts/requirements.txt
-cp .env.example .env   # fill FISH_AUDIO_API_KEY, FISH_AUDIO_VOICE_ID
+cp .env.example .env   # optional: only if you choose a provider that reads these settings
 ```
 
-**Any AI coding agent:**
-Point your agent at `docs/quickstart.md` and `examples/schoger-demo/`. The whole pipeline is four scripts — an agent can read, modify, and run it without framework knowledge.
+**AI coding agents:** start with the [Agent Skill](skills/video-explainer/SKILL.md) and [current quickstart](docs/quickstart.md). Production requires its documented storyboard/review/final-MP4 gates; do not treat old single-script examples as current first-run recipes.
 
 ## Requirements
 
 - Node 20+
 - Python 3.10+
 - ffmpeg (`brew install ffmpeg`)
-- Fish Audio API key (default TTS) — or skip it and use the macOS `say` fallback for local testing
-- (Optional) CUDA GPU if you want to run IndexTTS2 locally
+- **Keyless demo:** macOS built-in `say` (the `demo` command intentionally clears Fish credentials; it is not the Linux/Windows demo path).
+- **Production Remotion narration:** default `cosyvoice` requires `DASHSCOPE_API_KEY`, `COSYVOICE_VOICE_ID`, and the `dashscope` Python package; optional Fish Audio requires its own key/voice and an explicitly set `TTS_BACKEND=fish` environment variable.
+- (Optional) CUDA GPU if you separately configure local IndexTTS2.
 
-New to Fish Audio? [Create an account here](https://fish.audio/?code=VCG6XOES4XIY2) — best-in-class Chinese voice cloning with a trivial API.
+Fish Audio is an optional provider, not a requirement for this kit. Its [signup link](https://fish.audio/?code=VCG6XOES4XIY2) is relevant only if you choose that backend.
 
 That's it. No video editor, no recording gear, no timeline.
 
@@ -127,7 +127,7 @@ That's it. No video editor, no recording gear, no timeline.
 | `code` | Code-as-video blocks | `code`, `language`, `voice_text` | `voice` |
 | `numberHero` | Big-number data hook (shorts) | `heroValue` | `heroLabel`, `heroBadge`, `heroPrefix`, `heroSuffix`, `heroAccentColor` |
 
-**`voice_text`** is the narration script — kept separate from on-screen `text` so your voice-over can be more natural than what the slide shows. **`voice`** overrides the default Fish Audio voice ID for that slide.
+**`voice_text`** is the narration script — kept separate from on-screen `text` so your voice-over can be more natural than what the slide shows. **`voice`** can override a per-slide provider voice where the selected backend supports it (including Fish Audio); do not assume the override behaves identically across backends.
 
 Add your own slide type by dropping a new composition into `remotion/src/compositions/` and registering it in `Root.tsx`. See `docs/quickstart.md`.
 
@@ -137,16 +137,16 @@ Phase 1 adds a vertical short-video pipeline: 1080×1920 canvas, dense motion, b
 
 ## Examples in this repo
 
-- **`examples/my-first/`** — 3-slide starter template. Copy this folder, edit `script.json`, render. The fastest way to get a working video.
+- **`examples/my-first/`** — a legacy 3-slide `script.json` example, not a current production-ready project. For a first run, use the guarded `npm run demo` path.
 - **`examples/schoger-demo/`** — the script behind [my first AI-generated short on X](https://x.com/runes_leo). A worked example of a real shipped video, kept for reference (assets not included, only the script).
 
-## Verified
+## Historical verification (v0.1)
 
-This release was end-to-end tested on macOS (Apple Silicon) with `examples/my-first`. The shipped pipeline produces a **1080×1920 @ 30fps, 8 seconds, 442 KB** vertical mp4 — narration via Fish Audio (or `say` fallback if no API key), captions via Whisper, render via Remotion. See `docs/quickstart.md` for first-run notes (including China network setup).
+The original v0.1 release was end-to-end tested on macOS (Apple Silicon) with `examples/my-first`. This historical result is **not** a fresh-install acceptance test of all v0.3.0-rc.1 strategies. The shipped pipeline produces a **1080×1920 @ 30fps, 8 seconds, 442 KB** vertical mp4 — narration via Fish Audio (or `say` fallback if no API key), captions via Whisper, render via Remotion. See `docs/quickstart.md` for first-run notes (including China network setup).
 
-## Known limitations (v0.1)
+## Historical limitations (v0.1; some may be superseded)
 
-- **The `say` fallback is rough — use Fish Audio for anything you'll publish.** Without an API key the pipeline degrades to macOS `say`, which is fine for "does my pipeline run end-to-end" but ships with two real annoyances: (a) it can't disambiguate Chinese homographs, e.g. `行` in `一行代码` gets read as `háng` instead of `xíng`; (b) Whisper's `base` model struggles to align robotic synthetic voices, so captions drift by a beat. Both vanish with a real Fish Audio voice.
+- **The `say` fallback is rough and never qualifies a demo for publication.** Without an API key the pipeline degrades to macOS `say`, which is fine for "does my pipeline run end-to-end" but ships with two real annoyances: (a) it can't disambiguate Chinese homographs, e.g. `行` in `一行代码` gets read as `háng` instead of `xíng`; (b) Whisper's `base` model struggles to align robotic synthetic voices, so captions drift by a beat. A better voice backend may help, but pronunciation and caption alignment still need explicit review.
 - No automatic cover generator — covers are whatever the `cover` slide renders
 - No B-roll / video clip support — slides are still-frame + audio + captions
 - Single voice per video (per-slide voice override is in the schema but undertested)
@@ -171,12 +171,12 @@ or compose; the release gate is mandatory before handoff:
   from `metadata.json`. Supports a blacklist-based compliance pass that strips
   regulator-sensitive words while keeping brand names — stripping brands costs
   vertical-search discoverability.
-- **Pre-render review gate** (see [`docs/pre-render-review.md`](docs/pre-render-review.md))
-  — a manual convention: before TTS + render, have a second model read the
+- **Pre-render review gate** (historical v0.2 description; see the current [`video-explainer` Skill](skills/video-explainer/SKILL.md))
+  — originally a manual convention, now enforced through a script-hash-bound review receipt for the legacy Remotion path. Have an independent reviewer read the
   script. TTS + render costs ~30 min per iteration; 5 min of review usually
   avoids 2 hours of rerun.
 
-Typical chained usage:
+Historical v0.2 chained usage (not a current first-run recipe; current storyboard, review, and final-release gates still apply):
 
 ```bash
 # 1. Render as usual (v0.1)
@@ -258,7 +258,7 @@ When you render your own video, data goes only to the services you choose:
 
 Setup downloads dependencies you install yourself: Remotion and its packages from the npm registry (`npm ci --prefix remotion`), and the Python packages in `scripts/requirements.txt` (plus `dashscope` for CosyVoice) from PyPI.
 
-The TTS scripts read API keys only from environment variables or a `.env` file in the directory you run them from, and send each key only to its own service.
+TTS backends read credentials from their supported process environment; Fish Audio's script also attempts `.env` loading. Simply editing `.env` does **not** set `TTS_BACKEND` for `render.sh`. Credentials are used only when you explicitly choose the corresponding provider; the keyless demo clears Fish credentials.
 
 Stored only on your machine: everything a render produces inside your project folder (`workspace/` audio and captions, `metadata.json`, `out/full.mp4`, review and gate receipts), demo output (`out/video-explainer-demo-*` in the kit, or the path you pass with `--output`), and model caches (Hugging Face cache for Whisper, Chrome Headless Shell under `remotion/node_modules`).
 
