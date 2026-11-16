@@ -18,7 +18,7 @@
  *
  * Soft warnings (printed, don't fail):
  *   - 720p is accepted but 1080p+ is recommended
- *   - Visual scene-cut rhythm and static-hook heuristics for shorts
+ *   - Visual scene-cut rhythm and opening-hook prompts for human review
  *   - File size > 30MB (consider re-encoding before upload)
  *
  * This preflight never substitutes for the independent final-artifact review
@@ -38,6 +38,7 @@ const MIN_VERTICAL_HEIGHT = 1280;
 const RECOMMENDED_WIDTH = 1080;
 const RECOMMENDED_HEIGHT = 1920;
 const SHORTS_MAX_DURATION_S = 60;
+const SHORTS_MUX_TAIL_TOLERANCE_S = 0.25;
 const MAX_AVG_SCENE_INTERVAL_S = 3.0;
 const FIRST_HOOK_WINDOW_S = 2.0;
 
@@ -66,7 +67,7 @@ async function probeMeta(path) {
     "-select_streams",
     "v:0",
     "-show_entries",
-    "stream=width,height,r_frame_rate:format=duration,size",
+    "stream=width,height,r_frame_rate,duration:format=duration,size",
     "-of",
     "json",
     path,
@@ -74,10 +75,16 @@ async function probeMeta(path) {
   const data = JSON.parse(stdout);
   const stream = data.streams?.[0] ?? {};
   const fmt = data.format ?? {};
+  const streamDuration = Number.parseFloat(stream.duration ?? "NaN");
+  const containerDuration = Number.parseFloat(fmt.duration ?? "NaN");
   return {
     width: stream.width,
     height: stream.height,
-    duration: parseFloat(fmt.duration ?? "0"),
+    // AAC mux padding can extend the container after an exactly 60s video stream.
+    duration: Number.isFinite(streamDuration) && streamDuration > 0
+      ? streamDuration
+      : containerDuration,
+    containerDuration,
     sizeBytes: parseInt(fmt.size ?? "0", 10),
   };
 }
@@ -255,6 +262,12 @@ async function main() {
         : `duration ${fmt(meta.duration)}s must be positive`,
     );
   }
+  if (options.format === "shorts" && Number.isFinite(meta.containerDuration) &&
+      meta.containerDuration > SHORTS_MAX_DURATION_S + SHORTS_MUX_TAIL_TOLERANCE_S) {
+    failures.push(
+      `container duration ${fmt(meta.containerDuration)}s exceeds ${SHORTS_MAX_DURATION_S}s plus ${SHORTS_MUX_TAIL_TOLERANCE_S}s codec padding allowance`,
+    );
+  }
   const audioResult = options.checkAudio ? await checkAudioPreflight(path) : undefined;
   if (audioResult?.status === "FAIL") {
     failures.push(`audio preflight failed: ${audioResult.failures.join("; ")}`);
@@ -272,9 +285,17 @@ async function main() {
     if (medianInterval > 2.5) {
       warnings.push(`median detected scene interval ${fmt(medianInterval)}s > 2.5s (review pacing)`);
     }
-    if (hookSceneCount === 0 && meta.duration > FIRST_HOOK_WINDOW_S) {
-      warnings.push(`no detected cut in first ${FIRST_HOOK_WINDOW_S}s (review opening visuals; text/motion may not register)`);
-    }
+  } else {
+    warnings.push("explainer pacing requires independent chapter-level motion review (shorts cut thresholds do not apply)");
+  }
+  if (hookSceneCount === 0 && meta.duration > FIRST_HOOK_WINDOW_S) {
+    warnings.push(`no detected cut in first ${FIRST_HOOK_WINDOW_S}s (review opening visuals; text/motion may not register)`);
+  }
+  if (options.format === "shorts" && Number.isFinite(meta.containerDuration) &&
+      meta.duration <= SHORTS_MAX_DURATION_S &&
+      meta.containerDuration > SHORTS_MAX_DURATION_S &&
+      meta.containerDuration <= SHORTS_MAX_DURATION_S + SHORTS_MUX_TAIL_TOLERANCE_S) {
+    warnings.push(`container duration ${fmt(meta.containerDuration)}s slightly exceeds ${SHORTS_MAX_DURATION_S}s (review codec padding and platform fit)`);
   }
   if (meta.sizeBytes > 30 * 1024 * 1024) {
     warnings.push(
@@ -288,6 +309,9 @@ async function main() {
   console.log(`format: ${options.format}`);
   console.log(`canvas: ${meta.width}×${meta.height}`);
   console.log(`duration: ${fmt(meta.duration)}s`);
+  if (Number.isFinite(meta.containerDuration)) {
+    console.log(`container duration: ${fmt(meta.containerDuration)}s`);
+  }
   console.log(`size: ${fmt(meta.sizeBytes / 1024 / 1024)}MB`);
   console.log(`scene source: ${sceneSource}`);
   console.log(`scenes detected: ${scenes.length}`);

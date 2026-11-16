@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
-import { spawn } from 'node:child_process'
-import { chmod, mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { spawn, spawnSync } from 'node:child_process'
+import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -18,14 +18,14 @@ function runNode(args, options) {
   })
 }
 
-async function fakeMedia({ width, height, duration, audioResult } = {}) {
+async function fakeMedia({ width, height, duration, videoDuration, audioResult } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'video-preflight-'))
   const bin = join(root, 'bin')
   await mkdir(bin)
   const video = join(root, 'final.mp4')
   await writeFile(video, 'isolated synthetic fixture')
   const probe = JSON.stringify({
-    streams: [{ width, height, r_frame_rate: '30/1' }],
+    streams: [{ width, height, duration: String(videoDuration ?? duration), r_frame_rate: '30/1' }],
     format: { duration: String(duration), size: '1048576' },
   })
   await writeFile(join(bin, 'ffprobe'), `#!/bin/sh\nprintf '%s\\n' '${probe}'\n`)
@@ -57,7 +57,9 @@ test('long-form vertical explainer uses no hidden shorts duration cap', async ()
   assert.equal(result.code, 0, result.stderr || result.stdout)
   assert.match(result.stdout, /format: explainer/)
   assert.match(result.stdout, /PASS \(2\/2 technical gates\)/)
-  assert.doesNotMatch(result.stdout, /review pacing/)
+  assert.match(result.stdout, /explainer pacing requires independent chapter-level motion review/)
+  assert.match(result.stdout, /no detected cut in first 2s/)
+  assert.doesNotMatch(result.stdout, /avg detected scene interval/)
 })
 
 test('shorts recipe keeps 60-second target and still rejects bad aspect ratio', async () => {
@@ -70,6 +72,20 @@ test('shorts recipe keeps 60-second target and still rejects bad aspect ratio', 
   const squareResult = await runNode([square.video, '--format', 'explainer'], { env: square.env })
   assert.equal(squareResult.code, 1)
   assert.match(squareResult.stdout, /not supported 9:16 vertical/)
+})
+
+test('shorts uses picture duration and warns on small AAC mux padding', async () => {
+  const padded = await fakeMedia({ width: 1080, height: 1920, duration: 60.01, videoDuration: 60 })
+  const accepted = await runNode([padded.video, '--format', 'shorts'], { env: padded.env })
+  assert.equal(accepted.code, 0, accepted.stderr || accepted.stdout)
+  assert.ok(accepted.stdout.includes('duration: 60.00s'))
+  assert.ok(accepted.stdout.includes('container duration: 60.01s'))
+  assert.ok(accepted.stdout.includes('review codec padding and platform fit'))
+
+  const excessive = await fakeMedia({ width: 1080, height: 1920, duration: 60.4, videoDuration: 60 })
+  const rejected = await runNode([excessive.video, '--format', 'shorts'], { env: excessive.env })
+  assert.equal(rejected.code, 1)
+  assert.ok(rejected.stdout.includes('container duration 60.40s exceeds'))
 })
 
 test('explicit audio preflight FAIL blocks early even when video geometry passes', async () => {
@@ -88,6 +104,42 @@ test('explicit audio preflight FAIL blocks early even when video geometry passes
   assert.match(result.stdout, /audio preflight: FAIL/)
   assert.match(result.stdout, /audio loudness: -17\.86 LUFS/)
   assert.match(result.stdout, /FAIL \(1 of 3 technical gates failed\)/)
+})
+
+test('real FFmpeg audio preflight accepts normalized audio and rejects quiet audio', {
+  skip: ['ffmpeg', 'ffprobe', 'python3'].some((tool) =>
+    spawnSync(tool, [tool === 'python3' ? '--version' : '-version'], { stdio: 'ignore' }).status !== 0),
+}, async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'video-audio-real-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  const normalized = join(root, 'normalized.mp4')
+  const quiet = join(root, 'quiet.mp4')
+  const generated = spawnSync('ffmpeg', [
+    '-hide_banner', '-loglevel', 'error',
+    '-f', 'lavfi', '-i', 'color=c=black:s=720x1280:r=30:d=3',
+    '-f', 'lavfi', '-i', 'sine=frequency=440:sample_rate=48000:duration=3',
+    '-af', 'loudnorm=I=-14:TP=-2:LRA=8',
+    '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p',
+    '-c:a', 'aac', '-ar', '48000', '-ac', '2',
+    '-t', '3', '-y', normalized,
+  ], { encoding: 'utf8', timeout: 60000 })
+  assert.equal(generated.status, 0, generated.stderr || generated.error?.message)
+  const passed = await runNode([normalized, '--check-audio'])
+  assert.equal(passed.code, 0, passed.stderr || passed.stdout)
+  assert.ok(passed.stdout.includes('audio preflight: PASS'))
+  assert.ok(passed.stdout.includes('PASS (3/3 technical gates)'))
+
+  const attenuated = spawnSync('ffmpeg', [
+    '-hide_banner', '-loglevel', 'error', '-i', normalized,
+    '-map', '0:v:0', '-map', '0:a:0', '-c:v', 'copy',
+    '-af', 'volume=0.03', '-c:a', 'aac', '-ar', '48000', '-ac', '2',
+    '-y', quiet,
+  ], { encoding: 'utf8', timeout: 60000 })
+  assert.equal(attenuated.status, 0, attenuated.stderr || attenuated.error?.message)
+  const failed = await runNode([quiet, '--check-audio'])
+  assert.equal(failed.code, 1, failed.stderr || failed.stdout)
+  assert.ok(failed.stdout.includes('audio preflight: FAIL'))
+  assert.ok(failed.stdout.includes('integrated loudness'))
 })
 
 test('unknown format is a usage error', async () => {
