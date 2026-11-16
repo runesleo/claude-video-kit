@@ -121,6 +121,38 @@ class VideoReleaseGateTests(unittest.TestCase):
                     self.assertTrue(MODULE._audio_failures({**good, key: value},
                                     [{"mean_db": -23, "silence_ratio": 0.1}]))
 
+    def test_audio_preflight_reuses_release_checks_without_a_release_receipt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            video = Path(tmp) / "synthetic.mp4"
+            video.write_bytes(b"synthetic fixture only")
+            media = dict(duration_s=58.0, width=1080, height=1920,
+                         audio_sample_rate=48000, audio_channels=2,
+                         has_video=True, has_audio=True, video_start_s=0.0,
+                         audio_start_s=0.0, audio_duration_s=58.0,
+                         video_stream_count=1, audio_stream_count=1)
+            good = dict(integrated_lufs=-14.0, lra_lu=3.0, true_peak_dbtp=-2.0)
+            windows = [dict(mean_db=-23.0, silence_ratio=0.1)] * 3
+            with patch.object(MODULE, "probe_media", return_value=media), \
+                 patch.object(MODULE, "measure_loudness", return_value=good), \
+                 patch.object(MODULE, "measure_windows", return_value=windows):
+                passed = MODULE.audio_preflight(video)
+            self.assertEqual(passed["status"], "PASS", passed["failures"])
+            self.assertEqual(passed["schema"], "video_audio_preflight.v1")
+            self.assertNotIn("receipt", passed)
+
+            quiet = dict(good, integrated_lufs=-17.86)
+            with patch.object(MODULE, "probe_media", return_value={**media, "audio_channels": 1}), \
+                 patch.object(MODULE, "measure_loudness", return_value=quiet), \
+                 patch.object(MODULE, "measure_windows", return_value=windows):
+                failed = MODULE.audio_preflight(video)
+            self.assertEqual(failed["status"], "FAIL")
+            self.assertTrue(any("stereo" in error for error in failed["failures"]))
+            self.assertTrue(any("integrated loudness" in error for error in failed["failures"]))
+
+            missing = MODULE.audio_preflight(Path(tmp) / "missing.mp4")
+            self.assertEqual(missing["status"], "FAIL")
+            self.assertTrue(any("video missing" in error for error in missing["failures"]))
+
     def test_evaluate_requires_audio_evidence_even_in_injected_test_mode(self):
         with tempfile.TemporaryDirectory() as tmp:
             *_, result = self._passing_release(Path(tmp), audio_metrics={}, window_metrics=[])

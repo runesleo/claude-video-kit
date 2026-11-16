@@ -133,7 +133,7 @@ Add your own slide type by dropping a new composition into `remotion/src/composi
 
 ## Shorts pipeline (vertical 9:16)
 
-Phase 1 adds a vertical short-video pipeline: 1080×1920 canvas, dense motion, big text — built for YouTube Shorts / 抖音 / TikTok / 小红书 / B 站 Shorts. Set `"preset": "shorts"` in metadata to flip canvas + font scale in one place; render normally, then run `node scripts/verify-shorts.mjs <out.mp4>` for an objective 4-gate acceptance check (canvas, ≤60s, scene rhythm, hook entrance). See [`docs/SHORTS_PIPELINE.md`](docs/SHORTS_PIPELINE.md) for slide-type schema, captions config, and rhythm guidance.
+Phase 1 adds a vertical short-video pipeline: 1080×1920 canvas, dense motion, big text — built for YouTube Shorts / 抖音 / TikTok / 小红书 / B 站 Shorts. Set `"preset": "shorts"` in metadata to flip canvas + font scale in one place; render normally, then run `node scripts/verify-shorts.mjs <out.mp4> --format shorts --check-audio` for a technical preflight (9:16 canvas, recipe duration and shared release-gate audio rules). A 720×1280 vertical video is accepted with a resolution warning; scene-cut rhythm and opening-cut detection are review prompts, not hard failures or aesthetic scores. For longer vertical explainers, use `--format explainer`. Every final video still needs independent visual/factual review and the separate release gate before distribution. See [`docs/SHORTS_PIPELINE.md`](docs/SHORTS_PIPELINE.md) for slide-type schema, captions config, and rhythm guidance.
 
 ## Examples in this repo
 

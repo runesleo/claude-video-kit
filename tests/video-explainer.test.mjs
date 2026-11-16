@@ -448,7 +448,7 @@ test('shorts verification uses the render schedule when metadata is supplied', a
   assert.match(verified.stdout, /scene source: metadata schedule/i)
   assert.match(verified.stdout, /avg interval: 2\.00s/i)
   assert.match(verified.stdout, /first-2s scene changes: 1/i)
-  assert.match(verified.stdout, /PASS \(4\/4 hard gates\)/)
+  assert.match(verified.stdout, /PASS \(2\/2 technical gates\)/)
 })
 
 test('caption wrapping preserves spaces between Latin words', async () => {

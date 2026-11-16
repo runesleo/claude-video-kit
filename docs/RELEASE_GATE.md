@@ -14,9 +14,13 @@ script-bound pre-render review → render → verify-shorts
   → downstream verify again immediately before authorized upload/schedule
 ```
 
-The existing `video-explainer review`, `review-render`, and the four objective
-`verify-shorts` checks stay in place. The release gate adds final asset, platform,
-audio, and quality-profile evidence. A pre-render pass or shorts pass is not a
+The existing `video-explainer review` and `review-render` stay in place. The
+`verify-shorts` technical preflight accepts 9:16 vertical video from 720p,
+uses a shorts-specific duration target (or `--format explainer` without that cap),
+and reports scene rhythm as an advisory. `--check-audio` reuses the existing
+release-gate audio rules early; it never issues a release receipt. The final
+release gate still adds hash-bound asset, platform, audio, and quality-profile
+evidence. A pre-render pass or preflight pass is not a
 release pass. An intermediate render's review cannot approve a changed master.
 No command here uploads, schedules, publishes, or authorizes an account action.
 
@@ -28,12 +32,12 @@ and review inside an explicit project directory. Symlinks resolving outside that
 directory are rejected. `--canonical-root` optionally restricts the project to a
 larger allowed directory; by default the explicit project directory is the root.
 
-Run `verify-shorts` on the **final** short, not just the pre-edit render. Use
+Run `verify-shorts` on the **final** video, not just the pre-edit render. Use
 `--metadata` only when it matches the final timeline. Run the existing independent
 `review-render` on those same bytes, then complete the platform release review:
 
 ```bash
-node scripts/verify-shorts.mjs examples/my-first/out/final.mp4
+node scripts/verify-shorts.mjs examples/my-first/out/final.mp4 --format shorts --check-audio
 node scripts/video-explainer.mjs review-render examples/my-first/out/final.mp4 \
   --input examples/my-first/render-review-input.json
 

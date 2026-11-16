@@ -22,14 +22,14 @@ Run:
 
 ```bash
 node scripts/verify-shorts.mjs <project>/out/full.mp4 \
-  --metadata <project>/metadata.json
+  --format shorts --metadata <project>/metadata.json --check-audio
 ```
 
 For generated videos, the duration-matched render schedule is the authoritative scene source; this avoids treating dark programmatic transitions as static frames. Without `--metadata`, the verifier falls back to visual scene detection. Both paths measure the opening and every scene interval, including the first and last.
 
-Require a 1080×1920 canvas, no more than 60 seconds, an average scene interval of no more than 3 seconds, and a scene change in the first 2 seconds. Report soft warnings separately from hard failures.
+The technical hard requirements are a usable vertical 9:16 canvas (720×1280 minimum) and a valid duration: the shorts recipe targets at most 60 seconds, while `--format explainer` has no automatic short-form cap. Full HD is recommended, not assumed to be the only publishable size. A slow visual scene-cut rate or no detected cut in the first 2 seconds should prompt an independent motion/retention review, not an automatic FAIL: the detector cannot identify all within-shot animation. `--check-audio` invokes the existing release gate's loudness, peak, channel, timeline, and silence rules early.
 
-This objective pass is necessary but insufficient. It does not prove hierarchy, alignment, phone-size readability, animation polish, end-card correctness, or chapter-level loudness consistency.
+This technical pass is necessary but insufficient. It does not prove hierarchy, alignment, phone-size readability, animation polish, end-card correctness, or content rights. The independent final-artifact review and separate hash-bound release gate remain mandatory.
 
 ## Rendered-output review
 

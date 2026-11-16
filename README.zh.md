@@ -126,7 +126,7 @@ cp .env.example .env   # 可选：只有主动选用对应供应商时才填写
 
 ## 短视频管线（竖屏 9:16）
 
-Phase 1 加了竖屏短视频管线：1080×1920 画布，密集运动，大字 — 为 YouTube Shorts / 抖音 / TikTok / 小红书 / B 站 Shorts 而生。metadata 里写 `"preset": "shorts"` 一键切换画布 + 字号；正常渲染后跑 `node scripts/verify-shorts.mjs <out.mp4>` 客观验收（4 道硬卡：画布、≤60s、节奏、首 2s 钩子）。slide 类型 schema、字幕配置、节奏指南详见 [`docs/SHORTS_PIPELINE.md`](docs/SHORTS_PIPELINE.md)。
+Phase 1 加了竖屏短视频管线：1080×1920 画布，密集运动，大字 — 为 YouTube Shorts / 抖音 / TikTok / 小红书 / B 站 Shorts 而生。metadata 里写 `"preset": "shorts"` 一键切换画布 + 字号；正常渲染后跑 `node scripts/verify-shorts.mjs <out.mp4> --format shorts --check-audio` 做技术预检（9:16 画布、短视频配方时长与既有发布门禁的音频规则）。720×1280 竖屏可通过，但会提示分辨率建议；切镜节奏与开头切镜只提示人工复核，不作为硬性不合格证据。三分钟等较长竖屏解说用 `--format explainer`。所有成片仍需独立画面/事实审核与正式发布门禁。slide 类型 schema、字幕配置、节奏指南详见 [`docs/SHORTS_PIPELINE.md`](docs/SHORTS_PIPELINE.md)。
 
 ## 仓库里的两个示例
 
