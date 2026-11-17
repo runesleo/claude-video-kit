@@ -408,6 +408,40 @@ def _audio_failures(metrics: dict[str, float], windows: list[dict[str, Any]]) ->
     return errors
 
 
+def audio_preflight(video: Path) -> dict[str, Any]:
+    """Read-only early audio check; not a release receipt or reviewer approval."""
+    video = video.expanduser().resolve()
+    failures = require_media_tools()
+    if not video.is_file():
+        failures.append(f"video missing: {video}")
+    media: dict[str, Any] = {}
+    metrics: dict[str, float] = {}
+    windows: list[dict[str, Any]] = []
+    if not failures:
+        try:
+            media = probe_media(video)
+            failures.extend(_media_failures(media))
+        except (OSError, ValueError, RuntimeError) as exc:
+            failures.append(str(exc))
+    if media.get("has_audio") and media.get("duration_s", 0) > 0:
+        try:
+            metrics = measure_loudness(video)
+            windows = measure_windows(video, float(media["duration_s"]))
+            failures.extend(_audio_failures(metrics, windows))
+        except (OSError, ValueError, RuntimeError, KeyError) as exc:
+            failures.append(str(exc))
+    return {
+        "schema": "video_audio_preflight.v1",
+        "status": "FAIL" if failures else "PASS",
+        "video": {"path": str(video), "sha256": sha256_file(video) if video.is_file() else None},
+        "media": media,
+        "metrics": metrics,
+        "representative_windows": windows,
+        "failures": failures,
+        "note": "Preflight only; distribution still requires release-gate evaluate and verify.",
+    }
+
+
 def evaluate_release(
     *,
     project_dir: Path,
@@ -777,6 +811,12 @@ def cmd_review_template(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_audio_preflight(args: argparse.Namespace) -> int:
+    result = audio_preflight(Path(args.video))
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0 if result["status"] == "PASS" else 2
+
+
 class GateArgumentParser(argparse.ArgumentParser):
     def error(self, message: str) -> None:
         raise ValueError(message)
@@ -810,6 +850,10 @@ def build_parser() -> argparse.ArgumentParser:
     template = sub.add_parser("review-template", help="print independent final-review receipt template")
     template.add_argument("--platform", required=True)
     template.set_defaults(func=cmd_review_template)
+
+    preflight = sub.add_parser("audio-preflight", help="read-only audio QA before final release evidence")
+    preflight.add_argument("--video", required=True)
+    preflight.set_defaults(func=cmd_audio_preflight)
     return parser
 
 

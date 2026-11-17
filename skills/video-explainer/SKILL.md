@@ -79,17 +79,19 @@ For repository development, run commands from the repository root.
 6. For **every strategy**, verify the exact final MP4 objectively:
 
    ```bash
-   node scripts/verify-shorts.mjs <video.mp4>
+   node scripts/verify-shorts.mjs <short.mp4> --format shorts --check-audio
+   # For longer vertical explainers, do not apply the shorts recipe's 60s target:
+   node scripts/verify-shorts.mjs <explainer.mp4> --format explainer --check-audio
    ```
 
    For the deterministic Remotion path, prefer bound render metadata when available:
 
    ```bash
    node scripts/verify-shorts.mjs <project>/out/full.mp4 \
-     --metadata <project>/metadata.json
+     --format shorts --metadata <project>/metadata.json --check-audio
    ```
 
-   The objective verifier checks canvas, duration, and scene rhythm. It does **not** prove factual correctness, visual polish, privacy, copyright, narration consistency, or end-card correctness.
+   The preflight hard-checks a usable 9:16 canvas and a format-appropriate duration. `shorts` keeps the deterministic recipe's 60s target; `explainer` does not impose an arbitrary short-form cap. Detected cuts and opening scene rhythm are **review prompts**, never automatic proof of good/bad animation: text reveals and camera movement can be missed by a scene-cut detector. `--check-audio` invokes the existing release-gate audio measurement rules early, without creating a release receipt. It does **not** prove factual correctness, visual polish, privacy, copyright, narration consistency, or end-card correctness.
 
 7. Require an independent final-artifact review bound to the exact MP4 SHA-256:
 
@@ -141,7 +143,7 @@ The demo exercises the deterministic fallback. It must create a current pre-rend
 - Stop the `legacy_remotion` production path when `motion-storyboard.json` is missing or fails its gate. The only exception is the explicit demo-quality script-alignment path.
 - Stop `legacy_remotion` before TTS/render when the pre-render review is missing, stale, `fix`, or `block`.
 - Stop every strategy short of publication-quality acceptance when final-artifact review is missing, stale, `fix`, or `block`.
-- Stop when objective MP4 verification fails.
+- Stop when objective MP4 technical or requested audio preflight fails; investigate scene-rhythm warnings in the independent visual review rather than blocking on cut counts alone.
 - Stop distribution handoff when final release evidence is missing, stale, malformed, or fails `evaluate` / `verify`.
 - Stop when doctor reports a required runtime missing for the deterministic fallback; give its exact action.
 - Stop before any upload, public post, deploy, paid API call, credential setup, or account action and return that boundary to the user.

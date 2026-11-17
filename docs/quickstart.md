@@ -45,11 +45,11 @@ For `legacy_remotion`, prepare a `motion-storyboard.json` and a project `script.
 ```bash
 node scripts/video-explainer.mjs review <project> --input <project>/review-input.json
 node scripts/video-explainer.mjs render <project>
-node scripts/verify-shorts.mjs <project>/out/full.mp4 --metadata <project>/metadata.json
+node scripts/verify-shorts.mjs <project>/out/full.mp4 --format shorts --metadata <project>/metadata.json --check-audio
 node scripts/video-explainer.mjs review-render <project>/out/full.mp4 --input <project>/render-review-input.json
 ```
 
-Use [motion-storyboard guidance](../skills/video-explainer/references/motion-storyboard.md), [review-gate guidance](../skills/video-explainer/references/review-gate.md), and [render-and-verify guidance](../skills/video-explainer/references/render-and-verify.md) to prepare the required files. The eleven pre-render checks are judged by a different reviewer; a current `pass` receipt is required for `legacy_remotion`. Other strategies skip unnecessary intermediate files but **not** the final MP4 review.
+Use [motion-storyboard guidance](../skills/video-explainer/references/motion-storyboard.md), [review-gate guidance](../skills/video-explainer/references/review-gate.md), and [render-and-verify guidance](../skills/video-explainer/references/render-and-verify.md) to prepare the required files. The eleven pre-render checks are judged by a different reviewer; a current `pass` receipt is required for `legacy_remotion`. Other strategies skip unnecessary intermediate files but **not** the final MP4 review. For a longer vertical explainer use `--format explainer --check-audio` instead of the shorts recipe's 60-second target; scene-cut pacing is advisory and cannot replace human motion review.
 
 Before any platform handoff, finish cover/audio/subtitle edits and run the separate [final release gate](./RELEASE_GATE.md) on the **exact final master**. The Skill itself never uploads, schedules, or publishes.
 

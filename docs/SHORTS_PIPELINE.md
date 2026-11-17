@@ -478,15 +478,16 @@ python3 ~/.config/bilibili/upload.py <project_dir>
 
 ## Verification gates
 
-`scripts/verify-shorts.mjs` 4 hard gates：
+`scripts/verify-shorts.mjs` 技术预检的硬性要求：
 
-1. Canvas = 1080×1920
-2. Duration ≤ 60s
-3. Average scene change ≤ 3.0s
-4. ≥1 scene change in first 2s（hook entrance）
+1. 竖屏 9:16，至少 720×1280；1080×1920 为推荐质量档位
+2. `--format shorts` 的本仓库制作配方要求时长 ≤60s；较长竖屏解说用 `--format explainer`
+3. 可选 `--check-audio` 直接复用最终发布门禁的音频规则（响度、峰值、音轨与静音）
+
+平均切镜间隔和首 2 秒是否检测到切镜属于**人工复核提示**，不再作为硬性失败：文字揭示、镜头移动等不一定能被切镜检测器识别。技术预检通过也不等于画面审美通过，更不等于正式发布门禁通过。
 
 ```bash
-node scripts/verify-shorts.mjs out/shorts.mp4
+node scripts/verify-shorts.mjs out/shorts.mp4 --format shorts --check-audio
 ```
 
 ---
