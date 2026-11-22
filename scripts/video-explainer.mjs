@@ -3,14 +3,14 @@
  * video-explainer — guarded entrypoint for the reviewed vertical-video flow.
  *
  * asset-version: v0.3.0-rc.1 / 2026-09-14 / add design-quality and rendered-output review gates
- * owner_surface: claude-video-kit / T0580 / video-explainer Agent Skill
+ * owner_surface: claude-video-kit / video-explainer Agent Skill
  * behavior_change: rendering requires eleven current pre-render checks; publication-quality acceptance also requires an independent review bound to the exact rendered video bytes
  * rollback: revert the 2026-09-14 review-gate change; legacy render.sh remains available
  */
 
 import { createHash } from 'node:crypto'
 import { spawn, spawnSync } from 'node:child_process'
-import { constants, existsSync } from 'node:fs'
+import { constants, existsSync, statSync } from 'node:fs'
 import { access, copyFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -61,7 +61,7 @@ function validateRequiredChecks(checks, required, label = 'review check') {
   }
 }
 
-export function evaluateDoctor(observations) {
+export function evaluateDoctor(observations, { demo = false } = {}) {
   const required = ['node', 'python', 'ffmpeg', 'ffprobe', 'remotion', 'outputWritable']
   const actions = []
   for (const name of required) {
@@ -75,16 +75,34 @@ export function evaluateDoctor(observations) {
 
   let ttsMode = 'unavailable'
   const warnings = []
-  if (observations.fishAudio?.ok) ttsMode = 'fish-audio'
-  else if (observations.platform === 'darwin' && observations.say?.ok) {
-    ttsMode = 'say-demo'
-    warnings.push('macOS say is a demo-quality fallback, not publication-quality narration.')
+  const backend = observations.ttsBackend || 'cosyvoice'
+  const sayAvailable = observations.platform === 'darwin' && observations.say?.ok
+  if (demo) {
+    // demo clears Fish credentials before rendering, even when they are configured.
+    if (sayAvailable) ttsMode = 'say-demo'
+    else actions.push('The no-key demo requires macOS with the built-in say command; provider credentials do not enable this demo on other platforms.')
+  } else if (backend === 'cosyvoice') {
+    if (!observations.cosyVoice?.ok) actions.push('Export DASHSCOPE_API_KEY and COSYVOICE_VOICE_ID for the selected CosyVoice backend, then rerun doctor.')
+    if (!observations.dashscope?.ok) actions.push('Install the CosyVoice SDK with the render interpreter: "${PYTHON:-python3}" -m pip install dashscope.')
+    if (observations.cosyVoice?.ok && observations.dashscope?.ok) ttsMode = 'cosyvoice'
+  } else if (backend === 'fish') {
+    if (observations.fishAudio?.ok) {
+      if (observations.requests?.ok) ttsMode = 'fish-audio'
+      else actions.push('Install the Fish Audio HTTP dependency with the render interpreter: "${PYTHON:-python3}" -m pip install requests.')
+    } else actions.push('Export FISH_AUDIO_API_KEY and FISH_AUDIO_VOICE_ID for TTS_BACKEND=fish, or use doctor --demo for the keyless macOS check.')
+  } else if (backend === 'indextts2') {
+    if (observations.indexTts2?.ok) {
+      ttsMode = 'indextts2'
+      warnings.push('IndexTTS2 paths exist; model weights and runtime dependencies were not loaded or exercised. Follow docs/indextts2.md.')
+    } else actions.push('Set INDEXTTS2_DIR to a local checkout and INDEXTTS2_REF_AUDIO to an existing voice file; ensure the checkout contains indextts/infer_v2.py and the model directory contains config.yaml. See docs/indextts2.md.')
   } else {
-    actions.push('Set Fish Audio credentials, or run the demo on macOS with the built-in say command.')
+    actions.push(`Unsupported TTS_BACKEND: ${backend}. Choose cosyvoice, fish, or indextts2.`)
   }
+  if (ttsMode === 'say-demo') warnings.push('macOS say is a demo-quality fallback, not publication-quality narration.')
 
   return {
     ok: actions.length === 0,
+    mode: demo ? 'demo' : 'render',
     ttsMode,
     actions: [...new Set(actions)],
     warnings,
@@ -103,7 +121,20 @@ function commandVersion(command, args, minimum = [0, 0]) {
   return { ok: !result.error && result.status === 0 && meetsMinimum, version }
 }
 
-export async function collectDoctorObservations(outputDir = resolve(KIT_ROOT, 'out')) {
+function pythonModuleAvailable(interpreter, name) {
+  const result = spawnSync(interpreter, [
+    '-c',
+    'import importlib.util, sys; sys.exit(0 if importlib.util.find_spec(sys.argv[1]) is not None else 1)',
+    name,
+  ], { stdio: 'ignore', shell: false })
+  return { ok: !result.error && result.status === 0 }
+}
+
+function isFile(path) {
+  try { return Boolean(path) && statSync(path).isFile() } catch { return false }
+}
+
+export async function collectDoctorObservations(outputDir = resolve(KIT_ROOT, 'out'), { demo = false } = {}) {
   const outputPath = resolve(outputDir)
   let outputWritable = true
   let writableProbe = outputPath
@@ -136,10 +167,28 @@ export async function collectDoctorObservations(outputDir = resolve(KIT_ROOT, 'o
     // The actionable result below remains remotion=false.
   }
 
+  const ttsBackend = demo ? 'fish' : process.env.TTS_BACKEND || 'cosyvoice'
+  const pythonInterpreter = process.env.PYTHON || 'python3'
+  const providerChecks = {}
+  if (ttsBackend === 'cosyvoice') {
+    providerChecks.cosyVoice = { ok: Boolean(process.env.DASHSCOPE_API_KEY && process.env.COSYVOICE_VOICE_ID) }
+    providerChecks.dashscope = pythonModuleAvailable(pythonInterpreter, 'dashscope')
+  } else if (ttsBackend === 'fish' && !demo) {
+    providerChecks.requests = pythonModuleAvailable(pythonInterpreter, 'requests')
+  } else if (ttsBackend === 'indextts2') {
+    const repo = process.env.INDEXTTS2_DIR
+    const models = process.env.INDEXTTS2_MODEL_DIR ?? (repo ? resolve(repo, 'checkpoints') : '')
+    providerChecks.indexTts2 = { ok: Boolean(
+      repo && models && isFile(resolve(repo, 'indextts/infer_v2.py'))
+      && isFile(resolve(models, 'config.yaml')) && isFile(process.env.INDEXTTS2_REF_AUDIO),
+    ) }
+  }
+
   return {
     platform: process.platform,
+    ttsBackend,
     node: commandVersion(process.execPath, ['--version'], [20, 0]),
-    python: commandVersion('python3', ['--version'], [3, 10]),
+    python: commandVersion(pythonInterpreter, ['--version'], [3, 10]),
     ffmpeg: commandVersion('ffmpeg', ['-version']),
     ffprobe: commandVersion('ffprobe', ['-version']),
     remotion: { ok: existsSync(remotionBinary), version: remotionVersion },
@@ -148,6 +197,7 @@ export async function collectDoctorObservations(outputDir = resolve(KIT_ROOT, 'o
       ok: Boolean(process.env.FISH_AUDIO_API_KEY && process.env.FISH_AUDIO_VOICE_ID),
       version: process.env.FISH_AUDIO_API_KEY && process.env.FISH_AUDIO_VOICE_ID ? 'configured' : '',
     },
+    ...providerChecks,
     outputWritable: { ok: outputWritable, version: outputWritable ? outputPath : '' },
   }
 }
@@ -307,8 +357,9 @@ function optionValue(args, name) {
 async function cli(args) {
   const [command, projectArg] = args
   if (command === 'doctor') {
-    const observations = await collectDoctorObservations(optionValue(args, '--output'))
-    const report = evaluateDoctor(observations)
+    const options = { demo: args.includes('--demo') }
+    const observations = await collectDoctorObservations(optionValue(args, '--output'), options)
+    const report = evaluateDoctor(observations, options)
     if (args.includes('--json')) console.log(JSON.stringify(report, null, 2))
     else {
       console.log(`doctor: ${report.ok ? 'PASS' : 'BLOCKED'}`)
@@ -367,7 +418,7 @@ async function cli(args) {
     const prepareOnly = args.includes('--prepare-only')
     const doctor = prepareOnly
       ? null
-      : evaluateDoctor(await collectDoctorObservations(output))
+      : evaluateDoctor(await collectDoctorObservations(output, { demo: true }), { demo: true })
     if (doctor && !doctor.ok) throw new Error(`demo doctor blocked: ${doctor.actions.join(' ')}`)
 
     await prepareDemoProject(output)

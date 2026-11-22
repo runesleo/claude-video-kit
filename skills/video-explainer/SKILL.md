@@ -41,6 +41,15 @@ npx skills add runesleo/claude-video-kit --skill video-explainer
 
 For repository development, run commands from the repository root.
 
+For Claude Code's plugin route, use the existing `runesleo/x-reader` marketplace:
+
+```text
+/plugin marketplace add runesleo/x-reader
+/plugin install video-explainer-kit@runesleo
+```
+
+`claude-video-kit` is the plugin source, not a standalone marketplace. The `npx skills add` command above is the recommended Skill-only route; neither installation route installs the renderer's dependencies.
+
 ## Workflow
 
 1. Read the brief and run the capability challenge above. Select `direct_artifact`, `agent_orchestrated`, or `legacy_remotion`. Prefer the simplest strategy that can plausibly pass the same final acceptance contract.
@@ -53,7 +62,7 @@ For repository development, run commands from the repository root.
    node scripts/video-explainer.mjs doctor --output <output-directory>
    ```
 
-   Read [setup-and-doctor.md](references/setup-and-doctor.md) when doctor blocks or the environment is new.
+   This checks `TTS_BACKEND`, defaulting to `cosyvoice`, in the exported process environment. For the keyless macOS demo, use `doctor --demo` instead; that result does not validate a production provider. Read [setup-and-doctor.md](references/setup-and-doctor.md) when doctor blocks or the environment is new.
 
 4. For `legacy_remotion`, turn the brief into `motion-storyboard.json` **before** treating the script as ready. For every scene, define its information purpose, visual metaphor, motion grammar, why motion communicates better than a static card, duration hint, and explicit 3D decision.
 

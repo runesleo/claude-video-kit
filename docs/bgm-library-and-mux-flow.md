@@ -1,6 +1,6 @@
 # BGM 库分类索引 + audio mux flow · v0.1
 
-> 任务：W24-005 / T223 · claude-video-kit BGM 自动选配（当前 SHORTS_PIPELINE.md §What's not in Phase 1 标记为「手动 / 留空」）的落地索引。
+> 任务：claude-video-kit BGM 自动选配（当前 SHORTS_PIPELINE.md §What's not in Phase 1 标记为「手动 / 留空」）的落地索引。
 > 状态：v0.1 设计稿 + 占位库（**曲目未真下载**，只列分类骨架 + cue 定义 + 待补 source license）。
 > 范围：仅 shorts preset（vertical 9:16 ≤60s）。mid/long preset 等 Phase 2/3 再扩。
 > Last updated：2026-05-01

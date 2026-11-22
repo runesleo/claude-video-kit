@@ -9,14 +9,20 @@
 **适合谁：** 使用 Claude Code、Codex、Cursor 等 AI Agent 制作研究或技术解说视频，并希望流程可复现、成品可独立验收的人。  
 **不适合谁：** 期待托管式视频编辑器、Claude 专属 API 产品，或「输入选题 → 保证产出精美 AI 视频」的一键工厂。本仓库提供本地 Remotion 回退和验收工具，**不内置视频生成模型**。
 
-> **[v0.3.0-rc.1](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.1)（公开候选版）：** 可安装 `video-explainer` Skill。`legacy_remotion` 路线的渲染前审稿必须绑定当前 `script.json`；所有制作路线都需要针对最终 MP4 进行验证和独立审核。Skill 不上传、不发帖。
+> **[v0.3.0-rc.2](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.2)（公开候选版）：** 可安装 `video-explainer` Skill。`legacy_remotion` 路线的渲染前审稿必须绑定当前 `script.json`；所有制作路线都需要针对最终 MP4 进行验证和独立审核。Skill 不上传、不发帖。
 
 ## 作为插件安装
 
-- **Claude Code**（2.1.275 及以上）：`/plugin install video-explainer-kit --marketplace runesleo/x-reader`
+- **Claude Code**：先添加已有插件市场，再安装对应条目：
+
+  ```text
+  /plugin marketplace add runesleo/x-reader
+  /plugin install video-explainer-kit@runesleo
+  ```
+
 - **Codex**：先 `codex plugin marketplace add runesleo/x-reader`，再 `codex plugin add video-explainer-kit@runesleo`
 
-`runesleo` 插件市场里还有 Leo 的其他工具，见 [runesleo/x-reader](https://github.com/runesleo/x-reader)。
+插件市场是 [runesleo/x-reader](https://github.com/runesleo/x-reader)；`claude-video-kit` 是插件源码仓库，本身不是独立 marketplace。推荐的 Agent Skill 安装方式见下方 `npx skills add`。安装插件或 Skill 不会自动安装本地渲染依赖。
 
 ## 最快跑出第一条：Agent Skill
 
@@ -25,7 +31,7 @@ git clone https://github.com/runesleo/claude-video-kit.git
 cd claude-video-kit
 npm ci --prefix remotion
 npx skills add runesleo/claude-video-kit --skill video-explainer
-npm run doctor
+npm run doctor -- --demo
 npm run demo   # 仅适用于带 macOS say 的免 key 演示；自动创建时间戳输出目录
 
 # npm script 只是薄封装，直接跑底层命令等价：
@@ -33,6 +39,8 @@ npm run demo   # 仅适用于带 macOS say 的免 key 演示；自动创建时�
 ```
 
 免 key 的 `demo` 在 **macOS** 上使用本仓库 Remotion 回退：自带 `say` 配音、按脚本时间生成演示字幕，输出 1080×1920 视频并跑客观检查，不会调用付费 API 或上传。**这不是可直接发布的成片**：演示不会运行独立的最终视频审核。真实项目如选择 `legacy_remotion`，需先准备动态分镜，再 `review`、`render`；十一项渲染前审稿任一 `fix` / `block` / 缺失 / 过期都会阻止渲染。审核者判断内容是否通过，程序仅强制留痕与流程。其他制作策略不强制生成旧管线中间文件，但仍需验收最终 MP4 和发布前门禁。
+
+检查正式项目时运行不带 `--demo` 的 `npm run doctor`：它按 `TTS_BACKEND` 检查所选后端，默认 CosyVoice。Doctor 只检查本地依赖和已导出的环境配置，不验证远程凭证，也不生成配音。详见 [setup and doctor](skills/video-explainer/references/setup-and-doctor.md)。
 
 **横屏 8–15 分钟长视频**（HyperFrames + CosyVoice + 逐镜验收）见 **[docs/LONGFORM_HYPERFRAMES_PIPELINE.md](./docs/LONGFORM_HYPERFRAMES_PIPELINE.md)** — 编排脚本在生产 long-form workspace，本仓库提供 TTS / align / 分发等共用模块。  
 → 2026-05-26：**[可考虑升级](./docs/UPGRADE-NOTE-2026-05-26.md)**（编排已在生产 long-form workflow；kit 侧主要是 TTS/文档/slide-review 同步）。
@@ -135,7 +143,7 @@ Phase 1 加了竖屏短视频管线：1080×1920 画布，密集运动，大字 
 
 ## 历史验证（v0.1）
 
-以下是旧版验证记录，不等于对 v0.3.0-rc.1 的所有制作策略完成了全新机器安装验收。v0.1 在 mac (Apple Silicon) 上端到端跑通了 `examples/my-first`，产出 **1080×1920 @ 30fps，8 秒，442 KB** 的竖屏 mp4 — 旁白用 Fish Audio（没 API key 会降级到 macOS `say`），字幕用 Whisper，渲染用 Remotion。中国大陆首次安装需要挂代理，详见 `docs/quickstart.md`。
+以下是旧版验证记录，不等于对 v0.3.0-rc.2 的所有制作策略完成了全新机器安装验收。v0.1 在 mac (Apple Silicon) 上端到端跑通了 `examples/my-first`，产出 **1080×1920 @ 30fps，8 秒，442 KB** 的竖屏 mp4 — 旁白用 Fish Audio（没 API key 会降级到 macOS `say`），字幕用 Whisper，渲染用 Remotion。中国大陆首次安装需要挂代理，详见 `docs/quickstart.md`。
 
 ## 历史限制（v0.1，部分内容可能已更新）
 

@@ -86,7 +86,7 @@ videos (≤60s, big text, dense motion) for 抖音 / TikTok / 小红书 / B 站 
 }
 ```
 
-参考 `~/Projects/leo-vault/domains/内容创作/_SOP-文章尾部模板.md` 文章版结尾 SSOT。
+文章版结尾请使用公开的品牌结尾模板；本仓库仅规定视频结尾标准。
 
 **禁止**：
 - 用最后一帧给外部大佬 / 源头视频引流（流量送给别人）

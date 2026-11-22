@@ -1,6 +1,6 @@
 /**
  * asset-version: v0.3.0-rc.1 / 2026-07-22 / remove duplicate code-slide captions
- * owner_surface: claude-video-kit / T0580 / code slides
+ * owner_surface: claude-video-kit / code slides
  * behavior_change: captions render only through Root's shared CaptionsLayer
  * rollback: restore the local active-caption overlay below the code panel
  */

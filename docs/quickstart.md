@@ -9,7 +9,7 @@ This repository provides the `video-explainer` Agent Skill, a deterministic Remo
 - Remotion dependencies installed locally
 - **For the no-key demo:** macOS with built-in `say`. This demo intentionally does not use a paid TTS provider.
 
-`doctor` checks the runtime, Remotion installation, TTS availability, and output-directory permissions. It is **not** an end-to-end render test or a check of every optional Python package.
+`doctor` checks the runtime, Remotion installation, selected TTS prerequisites, and output-directory permissions. It follows `TTS_BACKEND` (default `cosyvoice`); `doctor --demo` checks the macOS `say` path used by the keyless demo. It is **not** an end-to-end render test, a remote credential check, or a check of every optional Python package.
 
 ## 1. First success on macOS (no API keys)
 
@@ -22,7 +22,7 @@ python3 -m pip install -r scripts/requirements.txt
 # Optional: register the Agent Skill with your coding agent.
 npx skills add runesleo/claude-video-kit --skill video-explainer
 
-npm run doctor
+npm run doctor -- --demo
 npm run demo
 ```
 
@@ -31,6 +31,8 @@ npm run demo
 **The demo output is not publication-ready.** The bundled sample review is not an independent review of your own video, and the demo deliberately skips the separate final-artifact review and platform release gate. It does not upload or publish.
 
 On Linux/Windows, `npm run demo` is **not a supported first-run path**, even if Fish Audio credentials exist: demo mode explicitly clears them and expects macOS `say`. Do not claim a successful cross-platform no-key demo from a passing `doctor`.
+
+For Claude Code plugin installation, use the existing marketplace: `/plugin marketplace add runesleo/x-reader`, then `/plugin install video-explainer-kit@runesleo`. The kit repository is the plugin source, not a marketplace. The `npx skills add` route above remains the recommended Skill-only installation.
 
 ## 2. Produce your own reviewed explainer
 
@@ -58,6 +60,8 @@ Before any platform handoff, finish cover/audio/subtitle edits and run the separ
 `scripts/render.sh` currently defaults to `TTS_BACKEND=cosyvoice` (not Fish Audio). This backend requires `DASHSCOPE_API_KEY`, `COSYVOICE_VOICE_ID`, and Python `dashscope` configured by the user.
 
 Fish Audio is **opt-in**, using `TTS_BACKEND=fish` in the **process environment**, plus `FISH_AUDIO_API_KEY` and `FISH_AUDIO_VOICE_ID`. The Fish script also attempts to read a local `.env`, but editing `.env` alone does **not** change the shell's `TTS_BACKEND` default. Optional IndexTTS2 requires separate local setup. Live TTS calls may incur provider charges; there is no paid call in the keyless macOS demo.
+
+Before a production render, run `npm run doctor` in the same exported environment. It checks CosyVoice's credential presence and `dashscope`, or Fish Audio's credential presence and `requests`. It does not load `.env` or test credentials against the provider. For IndexTTS2 it checks the local checkout, model config, and reference audio paths without loading weights or running inference. See [setup and doctor](../skills/video-explainer/references/setup-and-doctor.md) for the exact scope.
 
 The older `examples/my-first/script.json` illustrates the legacy format; **do not** run `./scripts/render.sh examples/my-first` as a first-run command. That sample lacks the required production `motion-storyboard.json` and the direct command would be blocked by today's gate.
 
