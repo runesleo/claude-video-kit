@@ -1,12 +1,13 @@
 {
   "name": "video-explainer-kit",
-  "version": "0.3.0-rc.2",
+  "version": "0.3.0-rc.3",
   "description": "Turn a brief, script or MP4 into a reviewed, verified vertical explainer video, with review receipts before publishing.",
   "author": {
     "name": "Leo",
     "url": "https://github.com/runesleo"
   },
   "homepage": "https://github.com/runesleo/claude-video-kit",
+  "documentationUrl": "https://github.com/runesleo/claude-video-kit/blob/main/docs/quickstart.md",
   "repository": "https://github.com/runesleo/claude-video-kit",
   "license": "MIT",
   "privacyPolicyUrl": "https://github.com/runesleo/claude-video-kit#data-and-network-access",

@@ -1,0 +1,16 @@
+{
+  "name": "video-explainer",
+  "description": "Install the Video Explainer Kit agent skill and local video quality workflow.",
+  "owner": {
+    "name": "Leo",
+    "url": "https://github.com/runesleo"
+  },
+  "plugins": [
+    {
+      "name": "video-explainer-kit",
+      "source": "./",
+      "description": "Turn a brief, script or MP4 into a reviewed, verified vertical explainer video.",
+      "version": "0.3.0-rc.3"
+    }
+  ]
+}
