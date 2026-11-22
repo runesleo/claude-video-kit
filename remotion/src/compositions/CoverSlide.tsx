@@ -54,7 +54,7 @@ export const CoverSlide: React.FC<CoverSlideProps> = ({
   // 末镜署名固定取自 design-system.json 的模板锁 —— 不再每条片子手填。
   // 见该文件 template.$comment：模板定稿后低频变更，默认不动。
   endCardCTAs,
-  /** CN 平台版片尾：按 T288，B站/小红书/抖音/视频号不得出现 TG 等信号入口。 */
+  /** CN 平台版片尾：遵循平台版规则，B站/小红书/抖音/视频号不得出现 TG 等信号入口。 */
   cnPlatform = false,
 }) => {
   const frame = useCurrentFrame();

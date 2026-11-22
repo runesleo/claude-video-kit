@@ -1,6 +1,6 @@
 /**
  * asset-version: v0.3.0-rc.1 / 2026-07-22 / preserve Latin spacing across caption wraps
- * owner_surface: claude-video-kit / T0580 / shorts captions
+ * owner_surface: claude-video-kit / shorts captions
  * behavior_change: whitespace is retained while visible-character limits remain unchanged
  * rollback: restore the whitespace-dropping token loop from the previous revision
  */

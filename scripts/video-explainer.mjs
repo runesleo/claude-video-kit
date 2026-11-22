@@ -3,7 +3,7 @@
  * video-explainer — guarded entrypoint for the reviewed vertical-video flow.
  *
  * asset-version: v0.3.0-rc.1 / 2026-09-14 / add design-quality and rendered-output review gates
- * owner_surface: claude-video-kit / T0580 / video-explainer Agent Skill
+ * owner_surface: claude-video-kit / video-explainer Agent Skill
  * behavior_change: rendering requires eleven current pre-render checks; publication-quality acceptance also requires an independent review bound to the exact rendered video bytes
  * rollback: revert the 2026-09-14 review-gate change; legacy render.sh remains available
  */

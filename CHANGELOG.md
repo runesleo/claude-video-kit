@@ -2,7 +2,15 @@
 
 All notable local release-candidate changes are recorded here. A version entry does not imply that a tag, GitHub Release, or package publication exists.
 
-## Unreleased — final release gate
+## 0.3.0-rc.2 — 2026-11-22
+
+- Align doctor with selected TTS. Default to CosyVoice, honor PYTHON, and reject incomplete Fish configuration outside explicit demo mode.
+- Distinguish the macOS no-key demo from a production render.
+- Correct public installation instructions, Skill entrypoints, and English README routing.
+- Clean pre-existing private workflow references while retaining the exact JPEG image bytes in an equivalent base64 string representation.
+- Verify with source privacy preflight and available Node, Python, and TS checks. Full real-video rendering and paid TTS are not claimed.
+
+### Final release gate
 
 - Fold `video-release-gate` evaluate/verify, quality profile, and its eight regression tests into this pipeline (issue #27).
 - Bind the final MP4, cover, three QA documents, independent final review, and current quality profile to one fail-closed release receipt; measure loudness, representative-window silence, and cover dimensions.
@@ -10,7 +18,7 @@ All notable local release-candidate changes are recorded here. A version entry d
 - Recheck complete evidence, review independence, audio policy, project containment, and every hash at handoff; reject malformed receipts, missing QA, and failed or unavailable audio samples.
 - Keep the script-bound pre-render receipt, `review-render`, and four-check `verify-shorts` unchanged. Add no uploader, scheduler, account access, or publication action.
 
-## Unreleased — 2026-09-14
+### Motion, storyboard, and rendered-output review
 
 - Expand the guarded pre-render review from six checks to eleven by adding design-quality gates for hierarchy, simplicity, clarity, legibility, and craft.
 - Treat those five checks as quality principles rather than permission to imitate another brand or bypass the canonical design system.

@@ -9,7 +9,7 @@
 **适合谁：** 使用 Claude Code、Codex、Cursor 等 AI Agent 制作研究或技术解说视频，并希望流程可复现、成品可独立验收的人。  
 **不适合谁：** 期待托管式视频编辑器、Claude 专属 API 产品，或「输入选题 → 保证产出精美 AI 视频」的一键工厂。本仓库提供本地 Remotion 回退和验收工具，**不内置视频生成模型**。
 
-> **[v0.3.0-rc.1](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.1)（公开候选版）：** 可安装 `video-explainer` Skill。`legacy_remotion` 路线的渲染前审稿必须绑定当前 `script.json`；所有制作路线都需要针对最终 MP4 进行验证和独立审核。Skill 不上传、不发帖。
+> **[v0.3.0-rc.2](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.2)（公开候选版）：** 可安装 `video-explainer` Skill。`legacy_remotion` 路线的渲染前审稿必须绑定当前 `script.json`；所有制作路线都需要针对最终 MP4 进行验证和独立审核。Skill 不上传、不发帖。
 
 ## 作为插件安装
 
@@ -143,7 +143,7 @@ Phase 1 加了竖屏短视频管线：1080×1920 画布，密集运动，大字 
 
 ## 历史验证（v0.1）
 
-以下是旧版验证记录，不等于对 v0.3.0-rc.1 的所有制作策略完成了全新机器安装验收。v0.1 在 mac (Apple Silicon) 上端到端跑通了 `examples/my-first`，产出 **1080×1920 @ 30fps，8 秒，442 KB** 的竖屏 mp4 — 旁白用 Fish Audio（没 API key 会降级到 macOS `say`），字幕用 Whisper，渲染用 Remotion。中国大陆首次安装需要挂代理，详见 `docs/quickstart.md`。
+以下是旧版验证记录，不等于对 v0.3.0-rc.2 的所有制作策略完成了全新机器安装验收。v0.1 在 mac (Apple Silicon) 上端到端跑通了 `examples/my-first`，产出 **1080×1920 @ 30fps，8 秒，442 KB** 的竖屏 mp4 — 旁白用 Fish Audio（没 API key 会降级到 macOS `say`），字幕用 Whisper，渲染用 Remotion。中国大陆首次安装需要挂代理，详见 `docs/quickstart.md`。
 
 ## 历史限制（v0.1，部分内容可能已更新）
 

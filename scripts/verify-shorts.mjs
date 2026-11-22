@@ -3,7 +3,7 @@
  * verify-shorts.mjs — early technical preflight for vertical videos.
  *
  * asset-version: v0.3.0-rc.1 / 2026-07-22 / verify generated cuts from bound render metadata
- * owner_surface: claude-video-kit / T0580 / shorts acceptance
+ * owner_surface: claude-video-kit / shorts acceptance
  * behavior_change: include first/last scenes and prefer a duration-matched render schedule when supplied
  * rollback: omit --metadata to retain visual scene detection; revert this file for legacy interval math
  *

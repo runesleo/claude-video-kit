@@ -93,7 +93,7 @@ type SlideMeta = {
   body?: string;
   badge?: string;
   badgeGradient?: [string, string];
-  /** CN 平台版：按 T288 去掉 TG 等信号入口 */
+  /** CN 平台版：按中国平台版规则去掉 TG 等信号入口 */
   cnPlatform?: boolean;
 
   // table

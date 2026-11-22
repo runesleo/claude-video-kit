@@ -7,7 +7,7 @@
 **Who it's for:** people using Claude Code, Codex, Cursor, or another capable AI agent to make research / technical explainers, and who value a repeatable 9:16 workflow with independent quality checks.  
 **Who it's not for:** a hosted video editor, a Claude-only API product, or a guaranteed one-click “topic → polished AI B-roll Short” service. This repository ships a local Remotion fallback and verification tools; direct video-generation models are not bundled.
 
-> **[v0.3.0-rc.1](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.1) (public release candidate):** installable `video-explainer` Agent Skill. The `legacy_remotion` path requires an independent, script-hash-bound pre-render review; every strategy requires verification and an independent review bound to the exact final MP4. The Skill never uploads or publishes.
+> **[v0.3.0-rc.2](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.2) (public release candidate):** installable `video-explainer` Agent Skill. The `legacy_remotion` path requires an independent, script-hash-bound pre-render review; every strategy requires verification and an independent review bound to the exact final MP4. The Skill never uploads or publishes.
 
 ## Install as a plugin
 
@@ -150,7 +150,7 @@ Phase 1 adds a vertical short-video pipeline: 1080×1920 canvas, dense motion, b
 
 ## Historical verification (v0.1)
 
-The original v0.1 release was end-to-end tested on macOS (Apple Silicon) with `examples/my-first`. This historical result is **not** a fresh-install acceptance test of all v0.3.0-rc.1 strategies. The shipped pipeline produces a **1080×1920 @ 30fps, 8 seconds, 442 KB** vertical mp4 — narration via Fish Audio (or `say` fallback if no API key), captions via Whisper, render via Remotion. See `docs/quickstart.md` for first-run notes (including China network setup).
+The original v0.1 release was end-to-end tested on macOS (Apple Silicon) with `examples/my-first`. This historical result is **not** a fresh-install acceptance test of all v0.3.0-rc.2 strategies. The shipped pipeline produces a **1080×1920 @ 30fps, 8 seconds, 442 KB** vertical mp4 — narration via Fish Audio (or `say` fallback if no API key), captions via Whisper, render via Remotion. See `docs/quickstart.md` for first-run notes (including China network setup).
 
 ## Historical limitations (v0.1; some may be superseded)
 
