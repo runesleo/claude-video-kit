@@ -356,6 +356,20 @@ function optionValue(args, name) {
 
 async function cli(args) {
   const [command, projectArg] = args
+  // Help is handled before doctor, demo preparation, TTS, or any filesystem writes.
+  if (args.includes('--help') || args.includes('-h') || command === 'help') {
+    console.log([
+      'Usage: video-explainer <command> [options]',
+      'Commands: doctor, review, render, review-render, demo',
+      '  doctor [--demo] [--json] [--output <dir>]  Inspect local prerequisites only',
+      '  demo [--prepare-only] [--output <dir>]  Prepare or render a macOS keyless demo',
+      '  review <project> --input <file>        Review a script before rendering',
+      '  render <project> [--dry-run] [--demo-quality]',
+      '  review-render <video.mp4> --input <file> [--output <file>]',
+      '  --help, -h                             Show this help without side effects',
+    ].join('\n'))
+    return
+  }
   if (command === 'doctor') {
     const options = { demo: args.includes('--demo') }
     const observations = await collectDoctorObservations(optionValue(args, '--output'), options)

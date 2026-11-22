@@ -1,0 +1,14 @@
+# Generated output, third-party installs and local credentials are not plugin source.
+.env
+.env.local
+node_modules/
+remotion/node_modules/
+out/
+workspace/
+.venv/
+__pycache__/
+**/*.wav
+**/*.mp3
+**/*.mp4
+**/review-result.json
+**/render-review-result.json

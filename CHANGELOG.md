@@ -2,6 +2,13 @@
 
 All notable local release-candidate changes are recorded here. A version entry does not imply that a tag, GitHub Release, or package publication exists.
 
+## 0.3.0-rc.3 — 2026-11-22
+
+- Fix side-effect-free `--help` across CLI commands, especially `demo --help`, with regression coverage.
+- Add one-entry same-source Claude Code marketplace for HOL installability; preserve existing x-reader marketplace.
+- Add a root dependency lock snapshot, pinned HOL plugin scanner CI, a narrowly bounded Dependabot policy, `.codexignore`, and a live HOL registry badge to expose repeatable evidence without paid verification.
+- Align all plugin/Skill/version/readme metadata; no paid providers or automatic video publication.
+
 ## 0.3.0-rc.2 — 2026-11-22
 
 - Align doctor with selected TTS. Default to CosyVoice, honor PYTHON, and reject incomplete Fish configuration outside explicit demo mode.

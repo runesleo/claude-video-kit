@@ -32,7 +32,7 @@ npm run demo
 
 On Linux/Windows, `npm run demo` is **not a supported first-run path**, even if Fish Audio credentials exist: demo mode explicitly clears them and expects macOS `say`. Do not claim a successful cross-platform no-key demo from a passing `doctor`.
 
-For Claude Code plugin installation, use the existing marketplace: `/plugin marketplace add runesleo/x-reader`, then `/plugin install video-explainer-kit@runesleo`. The kit repository is the plugin source, not a marketplace. The `npx skills add` route above remains the recommended Skill-only installation.
+For Claude Code plugin installation, use the existing pinned marketplace: `/plugin marketplace add runesleo/x-reader`, then `/plugin install video-explainer-kit@runesleo`. The kit repository also carries a one-entry compatibility marketplace for HOL installs: `/plugin marketplace add runesleo/claude-video-kit`, then `/plugin install video-explainer-kit@video-explainer`. Both route to the same source. The `npx skills add` route above remains the recommended Skill-only installation.
 
 ## 2. Produce your own reviewed explainer
 

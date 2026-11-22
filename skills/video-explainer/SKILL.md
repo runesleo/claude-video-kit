@@ -5,7 +5,7 @@ description: Turn a research brief, finished script, or generated MP4 into a rev
 
 # Video Explainer
 
-Version note: v0.3.0-rc.1 / 2026-09-27 / Make production strategy adaptive while keeping the deterministic Remotion recipe as a strict fallback. Final-artifact acceptance is strategy-independent and bound to the exact MP4 bytes. Keep upload, account access, credentials, private voice assets, hosted rendering, and publication out of scope.
+Version note: v0.3.0-rc.3 / 2026-11-22 / Keep adaptive strategies and final-MP4 gates, fix read-only CLI help, and make the repository directly installable through a single-entry Claude Code marketplace. No uploader, account access, credentials, paid provider calls, or publication.
 
 Produce a local video and evidence packet. Never upload or publish from this skill.
 
@@ -48,7 +48,7 @@ For Claude Code's plugin route, use the existing `runesleo/x-reader` marketplace
 /plugin install video-explainer-kit@runesleo
 ```
 
-`claude-video-kit` is the plugin source, not a standalone marketplace. The `npx skills add` command above is the recommended Skill-only route; neither installation route installs the renderer's dependencies.
+For HOL directory compatibility, the same source repository also hosts a one-entry marketplace: `/plugin marketplace add runesleo/claude-video-kit`, then `/plugin install video-explainer-kit@video-explainer`. This is the same plugin code, not a second product. The `npx skills add` command above is the recommended Skill-only route; no installation route installs the renderer's dependencies.
 
 ## Workflow
 

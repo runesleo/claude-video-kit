@@ -386,6 +386,24 @@ test('CLI writes a video-bound rendered-output review receipt', async () => {
   assert.equal((await validateRenderedReviewReceipt(video, receipt)).ok, true)
 })
 
+test('help, including demo --help, is read-only and never starts rendering', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'video-explainer-help-'))
+  const output = join(root, 'must-not-exist')
+  const cli = join(process.cwd(), 'scripts/video-explainer.mjs')
+  for (const args of [
+    ['--help'], ['help'], ['demo', '--help', '--output', output],
+    ['doctor', '--help'], ['render', '--help'], ['review-render', '-h'],
+  ]) {
+    const response = await runNode([cli, ...args], {
+      env: { ...process.env, FISH_AUDIO_API_KEY: '', FISH_AUDIO_VOICE_ID: '' },
+    })
+    assert.equal(response.code, 0, `${args.join(' ')}: ${response.stderr}`)
+    assert.match(response.stdout, /Usage: video-explainer/)
+    assert.doesNotMatch(response.stdout, /demo project:|review gate: pass|doctor: BLOCKED/i)
+  }
+  await assert.rejects(() => access(output))
+})
+
 test('doctor CLI is read-only, machine-readable, and reports the supported local demo path', async () => {
   const cli = join(process.cwd(), 'scripts/video-explainer.mjs')
   const output = await mkdtemp(join(tmpdir(), 'video-explainer-doctor-'))
@@ -547,19 +565,28 @@ test('video-explainer is a discoverable, concise skill with on-demand references
 test('release-candidate version, commands, changelog, and bilingual entrypoints stay aligned', async () => {
   const rootPackage = JSON.parse(await readFile(join(process.cwd(), 'package.json'), 'utf8'))
   const remotionPackage = JSON.parse(await readFile(join(process.cwd(), 'remotion/package.json'), 'utf8'))
-  assert.equal(rootPackage.version, '0.3.0-rc.2')
+  const rootLock = JSON.parse(await readFile(join(process.cwd(), 'package-lock.json'), 'utf8'))
+  const marketplace = JSON.parse(await readFile(join(process.cwd(), '.claude-plugin/marketplace.json'), 'utf8'))
+  assert.equal(rootLock.version, rootPackage.version)
+  assert.equal(rootLock.packages[''].version, rootPackage.version)
+  assert.equal(marketplace.name, 'video-explainer')
+  assert.equal(marketplace.plugins.length, 1)
+  assert.equal(marketplace.plugins[0].name, 'video-explainer-kit')
+  assert.equal(marketplace.plugins[0].source, './')
+  assert.equal(marketplace.plugins[0].version, rootPackage.version)
+  assert.equal(rootPackage.version, '0.3.0-rc.3')
   assert.equal(remotionPackage.version, rootPackage.version)
   for (const name of ['test', 'check', 'doctor', 'demo']) assert.equal(typeof rootPackage.scripts[name], 'string')
 
   const changelog = await readFile(join(process.cwd(), 'CHANGELOG.md'), 'utf8')
-  assert.match(changelog, /0\.3\.0-rc\.2/)
+  assert.match(changelog, /0\.3\.0-rc\.3/)
   assert.match(changelog, /video-explainer/)
   assert.match(changelog, /design-quality/i)
   for (const readme of ['README.md', 'README.zh.md']) {
     const body = await readFile(join(process.cwd(), readme), 'utf8')
     assert.match(body, /npx skills add runesleo\/claude-video-kit --skill video-explainer/)
     assert.match(body, /video-explainer\.mjs demo/)
-    assert.match(body, /0\.3\.0-rc\.2/)
+    assert.match(body, /0\.3\.0-rc\.3/)
   }
   await access(join(process.cwd(), '.github/workflows/ci.yml'))
 })

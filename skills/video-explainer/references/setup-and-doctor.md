@@ -17,7 +17,7 @@ For Claude Code plugins, register the existing marketplace and install its entry
 /plugin install video-explainer-kit@runesleo
 ```
 
-`runesleo/claude-video-kit` is the plugin source, not a marketplace. These commands do not install rendering dependencies. Run the local commands below from a clone of the kit repository.
+The source repository also includes a one-entry Claude Code marketplace for HOL directory installs: `/plugin marketplace add runesleo/claude-video-kit` followed by `/plugin install video-explainer-kit@video-explainer`. Both marketplaces install the same plugin source; the existing `runesleo/x-reader` entry continues to pin releases. These commands do not install rendering dependencies. Run the local commands below from a clone of the kit repository.
 
 ## Runtime prerequisites
 

@@ -1,5 +1,7 @@
 # claude-video-kit
 
+[![HOL registry trust and scan](https://img.shields.io/endpoint?url=https%3A%2F%2Fhol.org%2Fapi%2Fregistry%2Fbadges%2Fplugin%3Fslug%3Dleo%252Fvideo-explainer-kit%26metric%3Drelease)](https://hol.org/registry/plugins/leo%2Fvideo-explainer-kit)
+
 [English](./README.md) · **中文**
 
 **Video Explainer Kit** 是 AI Agent 使用的**解说视频制作与质量验收工作流**：从研究资料、脚本或已有 MP4 出发，按现有能力选择直接生成、Agent 组合工具，或回退到本仓库的 TTS + 字幕对齐 + Remotion 管线，最后验收成片。
@@ -9,7 +11,7 @@
 **适合谁：** 使用 Claude Code、Codex、Cursor 等 AI Agent 制作研究或技术解说视频，并希望流程可复现、成品可独立验收的人。  
 **不适合谁：** 期待托管式视频编辑器、Claude 专属 API 产品，或「输入选题 → 保证产出精美 AI 视频」的一键工厂。本仓库提供本地 Remotion 回退和验收工具，**不内置视频生成模型**。
 
-> **[v0.3.0-rc.2](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.2)（公开候选版）：** 可安装 `video-explainer` Skill。`legacy_remotion` 路线的渲染前审稿必须绑定当前 `script.json`；所有制作路线都需要针对最终 MP4 进行验证和独立审核。Skill 不上传、不发帖。
+> **[v0.3.0-rc.3](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.3)（公开候选版）：** 可安装 `video-explainer` Skill。`legacy_remotion` 路线的渲染前审稿必须绑定当前 `script.json`；所有制作路线都需要针对最终 MP4 进行验证和独立审核。Skill 不上传、不发帖。
 
 ## 作为插件安装
 
@@ -22,7 +24,14 @@
 
 - **Codex**：先 `codex plugin marketplace add runesleo/x-reader`，再 `codex plugin add video-explainer-kit@runesleo`
 
-插件市场是 [runesleo/x-reader](https://github.com/runesleo/x-reader)；`claude-video-kit` 是插件源码仓库，本身不是独立 marketplace。推荐的 Agent Skill 安装方式见下方 `npx skills add`。安装插件或 Skill 不会自动安装本地渲染依赖。
+原有 [runesleo/x-reader](https://github.com/runesleo/x-reader) marketplace 继续维护，使用精确提交锁定插件版本。为修复 HOL 目录从源码仓库安装的路径，同一个仓库现在也提供只有这一条插件的兼容 marketplace（**不是第二套代码**）：
+
+```text
+/plugin marketplace add runesleo/claude-video-kit
+/plugin install video-explainer-kit@video-explainer
+```
+
+两种入口指向同一份源码。推荐的 Agent Skill 安装方式见下方 `npx skills add`，它们均不会自动安装本地渲染依赖。
 
 ## 最快跑出第一条：Agent Skill
 

@@ -1,5 +1,7 @@
 # claude-video-kit
 
+[![HOL registry trust and scan](https://img.shields.io/endpoint?url=https%3A%2F%2Fhol.org%2Fapi%2Fregistry%2Fbadges%2Fplugin%3Fslug%3Dleo%252Fvideo-explainer-kit%26metric%3Drelease)](https://hol.org/registry/plugins/leo%2Fvideo-explainer-kit)
+
 **English** · [中文](./README.zh.md) · [README.en.md](./README.en.md)
 
 **Video Explainer Kit** is an Agent Skill for producing and checking **reviewed, verified vertical explainer videos** from a research brief, script, or existing MP4. It can select direct generation, agent-orchestrated tools, or the repository's deterministic TTS + caption alignment + Remotion fallback.
@@ -7,7 +9,7 @@
 **Who it's for:** people using Claude Code, Codex, Cursor, or another capable AI agent to make research / technical explainers, and who value a repeatable 9:16 workflow with independent quality checks.  
 **Who it's not for:** a hosted video editor, a Claude-only API product, or a guaranteed one-click “topic → polished AI B-roll Short” service. This repository ships a local Remotion fallback and verification tools; direct video-generation models are not bundled.
 
-> **[v0.3.0-rc.2](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.2) (public release candidate):** installable `video-explainer` Agent Skill. The `legacy_remotion` path requires an independent, script-hash-bound pre-render review; every strategy requires verification and an independent review bound to the exact final MP4. The Skill never uploads or publishes.
+> **[v0.3.0-rc.3](https://github.com/runesleo/claude-video-kit/releases/tag/v0.3.0-rc.3) (public release candidate):** installable `video-explainer` Agent Skill. The `legacy_remotion` path requires an independent, script-hash-bound pre-render review; every strategy requires verification and an independent review bound to the exact final MP4. The Skill never uploads or publishes.
 
 ## Install as a plugin
 
@@ -20,7 +22,14 @@
 
 - **Codex**: `codex plugin marketplace add runesleo/x-reader`, then `codex plugin add video-explainer-kit@runesleo`
 
-The marketplace is [runesleo/x-reader](https://github.com/runesleo/x-reader); `claude-video-kit` is the plugin source, not a standalone marketplace. For the recommended Agent Skill installation, use `npx skills add` below. Installing the plugin or Skill does not install the local rendering dependencies.
+The existing [runesleo/x-reader](https://github.com/runesleo/x-reader) marketplace remains supported and pins release commits. To make the HOL directory's one-repository install route work, this same source repository also provides a single-entry compatibility marketplace (no second codebase):
+
+```text
+/plugin marketplace add runesleo/claude-video-kit
+/plugin install video-explainer-kit@video-explainer
+```
+
+Both routes install the same `video-explainer-kit` source. For Skill-only installation, use `npx skills add` below. Neither route installs local rendering dependencies.
 
 ## Fastest first success: Agent Skill
 
