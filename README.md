@@ -11,10 +11,16 @@
 
 ## Install as a plugin
 
-- **Claude Code** (2.1.275 or later): `/plugin install video-explainer-kit --marketplace runesleo/x-reader`
+- **Claude Code**: add the existing marketplace, then install its named entry:
+
+  ```text
+  /plugin marketplace add runesleo/x-reader
+  /plugin install video-explainer-kit@runesleo
+  ```
+
 - **Codex**: `codex plugin marketplace add runesleo/x-reader`, then `codex plugin add video-explainer-kit@runesleo`
 
-The `runesleo` marketplace also lists Leo's other tools; see [runesleo/x-reader](https://github.com/runesleo/x-reader).
+The marketplace is [runesleo/x-reader](https://github.com/runesleo/x-reader); `claude-video-kit` is the plugin source, not a standalone marketplace. For the recommended Agent Skill installation, use `npx skills add` below. Installing the plugin or Skill does not install the local rendering dependencies.
 
 ## Fastest first success: Agent Skill
 
@@ -23,7 +29,7 @@ git clone https://github.com/runesleo/claude-video-kit.git
 cd claude-video-kit
 npm ci --prefix remotion
 npx skills add runesleo/claude-video-kit --skill video-explainer
-npm run doctor
+npm run doctor -- --demo
 npm run demo   # macOS + built-in say only; writes a new timestamped demo folder
 
 # npm scripts are thin wrappers — the underlying command works the same:
@@ -31,6 +37,8 @@ npm run demo   # macOS + built-in say only; writes a new timestamped demo folder
 ```
 
 The no-key `demo` exercises this local clone's Remotion fallback **on macOS**. It uses the built-in `say` voice and script-timed captions, writes a new timestamped output folder, checks a 1080×1920 MP4, and **does not** perform final-artifact review or qualify the video for publication. For real `legacy_remotion` projects, first prepare a motion storyboard, then run `review` and `render`; `fix`, `block`, missing, or stale receipts stop rendering. The eleven pre-render checks are judged by an independent reviewer — the tool enforces the recorded process, not the truth of those judgments. Direct/agent-orchestrated strategies may skip legacy intermediate files but must pass final MP4 review and release gates.
+
+Use `npm run doctor` without `--demo` for your selected production backend: it follows `TTS_BACKEND`, defaulting to CosyVoice. Doctor checks local prerequisites and exported configuration; it does not authenticate with a provider or generate narration. See [setup and doctor](skills/video-explainer/references/setup-and-doctor.md).
 
 > Editing scripts or compositions? Read [docs/DESIGN.md](docs/DESIGN.md) first — it's the design system contract.
 

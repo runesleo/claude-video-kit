@@ -233,9 +233,10 @@ test('guarded render never starts for fix receipts and runs for a current pass r
   )
 })
 
-test('doctor accepts the no-key macOS demo path and gives actionable blockers', () => {
-  const healthy = evaluateDoctor({
+function healthyDoctorObservations(overrides = {}) {
+  return {
     platform: 'darwin',
+    ttsBackend: 'cosyvoice',
     node: { ok: true, version: '25.9.0' },
     python: { ok: true, version: '3.11.9' },
     ffmpeg: { ok: true, version: '7.1' },
@@ -243,8 +244,62 @@ test('doctor accepts the no-key macOS demo path and gives actionable blockers', 
     remotion: { ok: true, version: '4.0.433' },
     say: { ok: true, version: 'macOS built-in' },
     fishAudio: { ok: false, version: '' },
+    cosyVoice: { ok: true, version: 'configured' },
+    dashscope: { ok: true },
+    requests: { ok: true },
+    indexTts2: { ok: false },
     outputWritable: { ok: true, version: 'yes' },
-  })
+    ...overrides,
+  }
+}
+
+test('doctor defaults to CosyVoice and does not replace missing configuration with Fish or say', () => {
+  const healthy = evaluateDoctor(healthyDoctorObservations({ ttsBackend: undefined }))
+  assert.equal(healthy.ok, true)
+  assert.equal(healthy.ttsMode, 'cosyvoice')
+
+  const blocked = evaluateDoctor(healthyDoctorObservations({
+    cosyVoice: { ok: false },
+    fishAudio: { ok: true },
+  }))
+  assert.equal(blocked.ok, false)
+  assert.equal(blocked.ttsMode, 'unavailable')
+  assert.match(blocked.actions.join('\n'), /DASHSCOPE_API_KEY.*COSYVOICE_VOICE_ID/)
+})
+
+test('doctor checks the selected backend requirements and rejects unsupported backends', () => {
+  const missingSdk = evaluateDoctor(healthyDoctorObservations({ dashscope: { ok: false } }))
+  assert.equal(missingSdk.ok, false)
+  assert.match(missingSdk.actions.join('\n'), /pip install dashscope/)
+
+  const fish = evaluateDoctor(healthyDoctorObservations({
+    platform: 'linux', ttsBackend: 'fish', fishAudio: { ok: true },
+  }))
+  assert.equal(fish.ok, true)
+  assert.equal(fish.ttsMode, 'fish-audio')
+  const missingRequests = evaluateDoctor({ ...fish.observations, requests: { ok: false } })
+  assert.equal(missingRequests.ok, false)
+  assert.match(missingRequests.actions.join('\n'), /pip install requests/)
+
+  const index = evaluateDoctor(healthyDoctorObservations({
+    ttsBackend: 'indextts2', indexTts2: { ok: true },
+  }))
+  assert.equal(index.ok, true)
+  assert.equal(index.ttsMode, 'indextts2')
+  assert.match(index.warnings.join('\n'), /model.*not.*loaded/i)
+  const missingIndex = evaluateDoctor({ ...index.observations, indexTts2: { ok: false } })
+  assert.equal(missingIndex.ok, false)
+  assert.match(missingIndex.actions.join('\n'), /INDEXTTS2_DIR.*INDEXTTS2_REF_AUDIO/)
+
+  const unsupported = evaluateDoctor(healthyDoctorObservations({ ttsBackend: 'typo' }))
+  assert.equal(unsupported.ok, false)
+  assert.match(unsupported.actions.join('\n'), /Unsupported TTS_BACKEND/)
+})
+
+test('doctor accepts only macOS say for explicit no-key demo mode, regardless of provider keys', () => {
+  const healthy = evaluateDoctor(healthyDoctorObservations({
+    fishAudio: { ok: true },
+  }), { demo: true })
   assert.equal(healthy.ok, true)
   assert.equal(healthy.ttsMode, 'say-demo')
   assert.match(healthy.warnings.join('\n'), /demo-quality/i)
@@ -252,9 +307,27 @@ test('doctor accepts the no-key macOS demo path and gives actionable blockers', 
   const blocked = evaluateDoctor({
     ...healthy.observations,
     ffmpeg: { ok: false, version: '' },
-  })
+  }, { demo: true })
   assert.equal(blocked.ok, false)
   assert.match(blocked.actions.join('\n'), /install ffmpeg/i)
+
+  const linux = evaluateDoctor({ ...healthy.observations, platform: 'linux' }, { demo: true })
+  assert.equal(linux.ok, false)
+  assert.equal(linux.ttsMode, 'unavailable')
+  assert.match(linux.actions.join('\n'), /demo requires macOS/i)
+
+  const noSay = evaluateDoctor({ ...healthy.observations, say: { ok: false } }, { demo: true })
+  assert.equal(noSay.ok, false)
+})
+
+test('doctor blocks incomplete Fish configuration on macOS until demo mode is explicit', () => {
+  const report = evaluateDoctor(healthyDoctorObservations({ ttsBackend: 'fish' }))
+  assert.equal(report.ok, false)
+  assert.equal(report.ttsMode, 'unavailable')
+  assert.match(report.actions.join('\n'), /FISH_AUDIO_API_KEY.*FISH_AUDIO_VOICE_ID/)
+  assert.match(report.actions.join('\n'), /doctor --demo/)
+  const demo = evaluateDoctor(report.observations, { demo: true })
+  assert.equal(demo.ttsMode, 'say-demo')
 })
 
 test('demo preparation copies only the public fixture and refuses to overwrite output', async () => {
@@ -316,17 +389,106 @@ test('CLI writes a video-bound rendered-output review receipt', async () => {
 test('doctor CLI is read-only, machine-readable, and reports the supported local demo path', async () => {
   const cli = join(process.cwd(), 'scripts/video-explainer.mjs')
   const output = await mkdtemp(join(tmpdir(), 'video-explainer-doctor-'))
-  const doctor = await runNode([cli, 'doctor', '--json', '--output', output])
+  const doctor = await runNode([cli, 'doctor', '--demo', '--json', '--output', output])
   const report = JSON.parse(doctor.stdout)
   assert.equal(doctor.code, report.ok ? 0 : 1, doctor.stderr)
-  assert.ok(['say-demo', 'fish-audio', 'unavailable'].includes(report.ttsMode))
+  assert.ok(['say-demo', 'unavailable'].includes(report.ttsMode))
   if (report.ok) assert.notEqual(report.ttsMode, 'unavailable')
   // ttsMode reports voice availability on its own; a Mac missing only remotion is ok=false with say-demo.
-  const ttsAction = report.actions.some((action) => /Fish Audio credentials/.test(action))
+  const ttsAction = report.actions.some((action) => /demo requires macOS/i.test(action))
   assert.equal(report.ttsMode === 'unavailable', ttsAction)
   for (const name of ['node', 'python', 'ffmpeg', 'ffprobe', 'remotion', 'outputWritable']) {
     assert.equal(typeof report.observations[name].ok, 'boolean')
   }
+})
+
+test('doctor CLI checks local CosyVoice configuration without exposing keys or calling TTS', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'video-explainer-doctor-cosyvoice-'))
+  const bin = join(root, 'bin')
+  await mkdir(bin)
+  await writeFile(join(bin, 'python3'), '#!/bin/sh\nif [ "$1" = "--version" ]; then printf "Python 3.11.9\\n"; else exit "$DOCTOR_TEST_MODULE_STATUS"; fi\n')
+  await chmod(join(bin, 'python3'), 0o755)
+  for (const name of ['ffmpeg', 'ffprobe']) {
+    await writeFile(join(bin, name), '#!/bin/sh\nprintf "test tool 7.1\\n"\n')
+    await chmod(join(bin, name), 0o755)
+  }
+  const env = {
+    ...process.env,
+    PATH: bin,
+    PYTHON: '',
+    TTS_BACKEND: '',
+    DASHSCOPE_API_KEY: 'doctor-test-secret-never-print',
+    COSYVOICE_VOICE_ID: 'doctor-test-voice-never-print',
+    FISH_AUDIO_API_KEY: '',
+    FISH_AUDIO_VOICE_ID: '',
+    DOCTOR_TEST_MODULE_STATUS: '0',
+  }
+  const cli = join(process.cwd(), 'scripts/video-explainer.mjs')
+  const output = join(root, 'untouched')
+  const checked = await runNode([cli, 'doctor', '--json', '--output', output], { env })
+  const report = JSON.parse(checked.stdout)
+  assert.equal(report.ttsMode, 'cosyvoice')
+  assert.equal(report.observations.ttsBackend, 'cosyvoice')
+  assert.equal(report.observations.cosyVoice.ok, true)
+  assert.equal(report.observations.dashscope.ok, true)
+  assert.doesNotMatch(checked.stdout + checked.stderr, /doctor-test-secret|doctor-test-voice/)
+  await assert.rejects(() => access(output))
+
+  const missingSdk = await runNode([cli, 'doctor', '--json'], {
+    env: { ...env, DOCTOR_TEST_MODULE_STATUS: '1' },
+  })
+  assert.equal(missingSdk.code, 1)
+  assert.match(JSON.parse(missingSdk.stdout).actions.join('\n'), /pip install dashscope/)
+
+  const customPython = join(root, 'selected-python')
+  await writeFile(customPython, '#!/bin/sh\nif [ "$1" = "--version" ]; then printf "Python 3.12.7\\n"; else exit 0; fi\n')
+  await chmod(customPython, 0o755)
+  const selectedPython = await runNode([cli, 'doctor', '--json'], {
+    env: { ...env, PYTHON: customPython, DOCTOR_TEST_MODULE_STATUS: '1' },
+  })
+  const selectedReport = JSON.parse(selectedPython.stdout)
+  assert.equal(selectedReport.observations.python.version, '3.12.7')
+  assert.equal(selectedReport.observations.dashscope.ok, true)
+  assert.equal(selectedReport.ttsMode, 'cosyvoice')
+
+  const incompleteFish = await runNode([cli, 'doctor', '--json'], {
+    env: { ...env, TTS_BACKEND: 'fish', FISH_AUDIO_API_KEY: 'doctor-test-unused-fish-key' },
+  })
+  assert.equal(incompleteFish.code, 1)
+  const fishReport = JSON.parse(incompleteFish.stdout)
+  assert.equal(fishReport.ttsMode, 'unavailable')
+  assert.match(fishReport.actions.join('\n'), /FISH_AUDIO_VOICE_ID.*doctor --demo/)
+  assert.doesNotMatch(incompleteFish.stdout + incompleteFish.stderr, /doctor-test-unused-fish-key/)
+
+  const demo = await runNode([cli, 'doctor', '--demo', '--json'], { env })
+  const demoReport = JSON.parse(demo.stdout)
+  assert.equal(demoReport.mode, 'demo')
+  assert.equal(demoReport.observations.ttsBackend, 'fish')
+  assert.equal('dashscope' in demoReport.observations, false)
+  assert.equal('requests' in demoReport.observations, false)
+})
+
+test('demo CLI rejects non-macOS before preparing output even when Fish credentials exist', {
+  skip: process.platform === 'darwin',
+}, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'video-explainer-demo-platform-'))
+  const output = join(root, 'must-not-be-created')
+  const fakeBash = join(root, 'bash')
+  await writeFile(fakeBash, '#!/bin/sh\nexit 99\n')
+  await chmod(fakeBash, 0o755)
+  const demo = await runNode([
+    join(process.cwd(), 'scripts/video-explainer.mjs'), 'demo', '--output', output,
+  ], { env: {
+    ...process.env,
+    PATH: root,
+    PYTHON: '',
+    TTS_BACKEND: 'fish',
+    FISH_AUDIO_API_KEY: 'demo-test-unused-key',
+    FISH_AUDIO_VOICE_ID: 'demo-test-unused-voice',
+  } })
+  assert.equal(demo.code, 1)
+  assert.match(demo.stderr, /demo requires macOS/i)
+  await assert.rejects(() => access(output))
 })
 
 test('doctor treats a new output path as writable without creating it', async () => {
