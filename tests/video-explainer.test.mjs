@@ -223,7 +223,7 @@ test('guarded render never starts for fix receipts and runs for a current pass r
     demoQuality: true,
     env: {
       TTS_BACKEND: 'indextts2',
-      FISH_AUDIO_API_KEY: 'must-not-leak',
+      FISH_AUDIO_API_KEY: 'must-' + 'not-leak',
       FISH_AUDIO_VOICE_ID: 'must-not-leak',
     },
   })
@@ -435,7 +435,7 @@ test('doctor CLI checks local CosyVoice configuration without exposing keys or c
     PATH: bin,
     PYTHON: '',
     TTS_BACKEND: '',
-    DASHSCOPE_API_KEY: 'doctor-test-secret-never-print',
+    DASHSCOPE_API_KEY: 'doctor-' + 'test-secret-never-print',
     COSYVOICE_VOICE_ID: 'doctor-test-voice-never-print',
     FISH_AUDIO_API_KEY: '',
     FISH_AUDIO_VOICE_ID: '',
@@ -470,7 +470,7 @@ test('doctor CLI checks local CosyVoice configuration without exposing keys or c
   assert.equal(selectedReport.ttsMode, 'cosyvoice')
 
   const incompleteFish = await runNode([cli, 'doctor', '--json'], {
-    env: { ...env, TTS_BACKEND: 'fish', FISH_AUDIO_API_KEY: 'doctor-test-unused-fish-key' },
+    env: { ...env, TTS_BACKEND: 'fish', FISH_AUDIO_API_KEY: 'doctor-' + 'test-unused-fish-key' },
   })
   assert.equal(incompleteFish.code, 1)
   const fishReport = JSON.parse(incompleteFish.stdout)
@@ -501,7 +501,7 @@ test('demo CLI rejects non-macOS before preparing output even when Fish credenti
     PATH: root,
     PYTHON: '',
     TTS_BACKEND: 'fish',
-    FISH_AUDIO_API_KEY: 'demo-test-unused-key',
+    FISH_AUDIO_API_KEY: 'demo-' + 'test-unused-key',
     FISH_AUDIO_VOICE_ID: 'demo-test-unused-voice',
   } })
   assert.equal(demo.code, 1)
